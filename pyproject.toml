@@ -22,6 +22,7 @@ lint.ignore = [
     "EM101", # Exception must not use a string literal, assign to variable first
     "EM102", # Exception must not use an f-string literal, assign to variable first
     "EM103", # Exception must not use a .format() string directly, assign to variable first
+    "PGH003" # Use specific rule codes when ignoring type issues
 ]
 
 lint.fixable = [
