@@ -1,0 +1,47 @@
+name: Test and lint
+
+on:
+    pull_request:
+      types:
+        - opened
+        - synchronize
+      branches:
+        - main
+        - develop
+
+jobs:
+  build_and_test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.12]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install tox tox-gh-actions
+
+    - name: Test with Tox
+      run: tox
+
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        overwrite: true
+        if-no-files-found: error
+        path: |
+         tests/reports/**/*.html
+         tests/reports/**/*.css
+         tests/reports/**/*.js
+         tests/reports/**/*.json
+         tests/reports/**/*.png
