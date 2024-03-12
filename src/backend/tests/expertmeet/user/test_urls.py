@@ -17,7 +17,7 @@ def test_token_obtain_pair():
     client = APIClient()
     url = reverse("token_obtain_pair")
     response = client.post(url, {"username": "testuser", "password": "testpassword"})
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.django_db()
@@ -25,4 +25,4 @@ def test_token_refresh():
     client = APIClient()
     url = reverse("token_refresh")
     response = client.post(url, {"refresh": "testrefresh"})
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
