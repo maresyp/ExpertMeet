@@ -11,6 +11,8 @@ on:
 
 jobs:
   build_and_test:
+    env:
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
