@@ -29,10 +29,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 dotenv.load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY")
-print(SECRET_KEY)
 Python_ROOT_DIR = os.getenv("Python_ROOT_DIR")
 print(f"{Python_ROOT_DIR=}")
+SECRET_KEY = os.getenv("SECRET_KEY")
+print(SECRET_KEY)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
