@@ -1,6 +1,4 @@
 name: Test and lint
-env:
-  SECRET_KEY: ${{ secrets.SECRET_KEY }}
 
 on:
     pull_request:
@@ -32,6 +30,8 @@ jobs:
         pip install tox tox-gh-actions
 
     - name: Test with Tox
+      env:
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
       run: tox
 
     - name: Upload artifacts
