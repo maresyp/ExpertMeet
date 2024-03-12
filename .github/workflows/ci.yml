@@ -30,7 +30,9 @@ jobs:
         pip install tox tox-gh-actions
 
     - name: Test with Tox
-      run: tox
+      run: |
+        echo ${{ secrets.SECRET_KEY }}
+        tox
 
     - name: Upload artifacts
       if: always()
