@@ -32,7 +32,9 @@ jobs:
     - name: Test with Tox
       env:
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      run: tox
+      run: |
+        echo ${{ secrets.SECRET_KEY }}
+        tox
 
     - name: Upload artifacts
       if: always()
