@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 
 
-dotenv.load_dotenv()
+# dotenv.load_dotenv()
 Python_ROOT_DIR = os.getenv("Python_ROOT_DIR")
 print(f"{Python_ROOT_DIR=}")
 SECRET_KEY = os.getenv("SECRET_KEY")
