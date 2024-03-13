@@ -5,10 +5,11 @@ services:
   backend-web-server:
     env_file:
       - .env
-    container_name: expertmeet-web-server
+    container_name: expertmeet-backend-web-server
     build:
       src/backend/expertmeet
-
+    ports:
+      - 8080:8080
     depends_on:
       - db-postgres
 
