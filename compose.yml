@@ -31,10 +31,9 @@ services:
     restart: "on-failure"
     volumes:
       - db-data:/var/lib/postgresql/data
+    env_file:
+      - .env
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=postgres
-      - POSTGRES_PASSWORD=postgres
       - POSTGRES_PORT=5432
     ports: # TODO : hide this port after testing is done
       - 5432:5432
