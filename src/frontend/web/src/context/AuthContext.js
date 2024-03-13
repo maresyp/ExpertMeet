@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
     const navigate = useNavigate()
 
     let updateToken = async () => {
-        console.log("update called");
+        console.log("Trying to update token");
         let response = await fetch(
             'http://127.0.0.1:8080/api/token/refresh/', {
             method: 'POST',
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('authTokens', JSON.stringify(data))
         } else {
             // TODO : add some kind of message about being logged out ?
-            logoutUser()
+            clearUserData()
         }
 
         if (loading) {
@@ -57,16 +57,22 @@ export const AuthProvider = ({ children }) => {
             setUser(jwtDecode(data.access))
             localStorage.setItem('authTokens', JSON.stringify(data))
             navigate('/')
+            return true
         } else {
-            alert('Something went wrong!')
-            // TODO: This need error handling
+            return false
+            // TODO: This need error handling ( network errors )
         }
     }
 
-    let logoutUser = () => {
+    const clearUserData = () => {
         setAuthTokens(null)
         setUser(null)
         localStorage.removeItem('authTokens')
+    }
+
+    let logoutUser = () => {
+        clearUserData()
+        navigate('/')
     }
 
     let contextData = {

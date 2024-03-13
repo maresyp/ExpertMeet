@@ -3,8 +3,6 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
 import Link from '@mui/material/Link';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
@@ -12,6 +10,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import AuthContext from '../context/AuthContext';
+import Alert from '@mui/material/Alert';
 
 function Copyright(props) {
     return (
@@ -28,16 +27,21 @@ function Copyright(props) {
 
 export default function SignIn() {
     let { loginUser } = React.useContext(AuthContext)
+    let [alert, setAlert] = React.useState({ open: false, message: '', severity: '' });
 
-    const handleSubmit = (event) => {
+    const showAlert = (message, severity) => {
+        setAlert({ open: true, message, severity });
+        setTimeout(() => setAlert({ open: false, message: '', severity: '' }), 3000);
+    };
+
+    const handleSubmit = async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
-        console.log({
-            email: data.get('email'),
-            password: data.get('password'),
-        });
 
-        loginUser(data.get('email'), data.get('password'))
+        let result = await loginUser(data.get('email'), data.get('password'))
+        if (!result) {
+            showAlert("Logowanie nie powiodło się, sprawdź swoje dane.", "error")
+        }
     };
 
     return (
@@ -57,6 +61,7 @@ export default function SignIn() {
                 <Typography component="h1" variant="h5">
                     Zaloguj się
                 </Typography>
+                {alert.open && <Alert severity={alert.severity}>{alert.message}</Alert>}
                 <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
                     <TextField
                         margin="normal"
