@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }) => {
             setUser(jwtDecode(data.access))
             localStorage.setItem('authTokens', JSON.stringify(data))
         } else {
+            // TODO : add some kind of message about being logged out ?
             logoutUser()
         }
 
@@ -39,16 +40,14 @@ export const AuthProvider = ({ children }) => {
         }
     }
 
-    let loginUser = async (e) => {
-        e.preventDefault()
-
+    let loginUser = async (login, pwd) => {
         let response = await fetch(
             'http://127.0.0.1:8080/api/token/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 'username': e.target.username.value, 'password': e.target.password.value })
+                body: JSON.stringify({ 'username': login, 'password': pwd })
         })
 
         const data = await response.json();
@@ -68,7 +67,6 @@ export const AuthProvider = ({ children }) => {
         setAuthTokens(null)
         setUser(null)
         localStorage.removeItem('authTokens')
-        navigate('/login')
     }
 
     let contextData = {

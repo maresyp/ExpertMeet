@@ -1,10 +1,10 @@
 import './App.css';
 import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
 import Header from './components/Header';
 import PrivateRoutes from './utils/PrivateRoutes';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import SignIn from './pages/SignIn';
 
 function App() {
   return (
@@ -13,10 +13,11 @@ function App() {
         <AuthProvider>
           <Header />
           <Routes>
+            <Route element={<HomePage />} exact path='/' />
+            <Route element={<SignIn />} path='/login' />
             <Route element={<PrivateRoutes />}>
-              <Route element={<HomePage />} exact path='/' />
+              {/* Private routes */}
             </Route>
-            <Route element={<LoginPage />} path='/login' />
           </Routes>
         </AuthProvider>
       </Router>
