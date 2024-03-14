@@ -4,6 +4,10 @@ import { Button } from '@mui/material';
 import AuthContext from '../context/AuthContext';
 import MenuItem from '@mui/material/MenuItem';
 import Divider from '@mui/material/Divider';
+import Badge from '@mui/material/Badge';
+import MailIcon from '@mui/icons-material/Mail'
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import Tooltip from '@mui/material/Tooltip';
 
 export function DrawerLoggedIn() {
     return (
@@ -55,10 +59,20 @@ const NavBarLoggedInButtons = () => {
         <Box
             sx={{
                 display: { xs: 'none', md: 'flex' },
-                gap: 0.5,
+                gap: 3.0,
                 alignItems: 'center',
             }}
         >
+            <Tooltip title="Wiadomości">
+                <Badge badgeContent={4} color="primary">
+                    <MailIcon color="action" />
+                </Badge>
+            </Tooltip>
+            <Tooltip title="Powiadomienia">
+                <Badge badgeContent={3} color="primary">
+                    <NotificationsIcon color="action" />
+                </Badge>
+            </Tooltip>
             <Button onClick={logoutHandler}
                 color="primary"
                 variant="contained"
