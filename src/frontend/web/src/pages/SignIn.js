@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import AuthContext from '../context/AuthContext';
 import Alert from '@mui/material/Alert';
+import AlertContext from '../context/AlertContext';
 
 function Copyright(props) {
     return (
@@ -27,16 +28,13 @@ function Copyright(props) {
 
 export default function SignIn() {
     let { loginUser } = React.useContext(AuthContext)
-    let [alert, setAlert] = React.useState({ open: false, message: '', severity: '' });
-
-    const showAlert = (message, severity) => {
-        setAlert({ open: true, message, severity });
-        setTimeout(() => setAlert({ open: false, message: '', severity: '' }), 3000);
-    };
+    const { alert, showAlert } = React.useContext(AlertContext)
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
+
+        // TODO : add validation of user input
 
         let result = await loginUser(data.get('email'), data.get('password'))
         if (!result) {
@@ -98,7 +96,7 @@ export default function SignIn() {
                             </Link>
                         </Grid>
                         <Grid item>
-                            <Link href="#" variant="body2">
+                            <Link href="/register" variant="body2">
                                 {"Nie masz konta? Zarejestruj się"}
                             </Link>
                         </Grid>

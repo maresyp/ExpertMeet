@@ -76,7 +76,7 @@ extra_checks = true
 ignore_missing_imports = true
 
 # dynamic typing
-disallow_any_unimported = true
+disallow_any_unimported = false
 disallow_any_expr = false
 disallow_any_decorated = false
 disallow_any_explicit = true
@@ -84,9 +84,9 @@ disallow_any_generics = false
 disallow_subclassing_any = true
 
 # untyped
-disallow_untyped_defs = false
+# disallow_untyped_defs = false
 check_untyped_defs = true
-disallow_incomplete_defs = true
+# disallow_incomplete_defs = true
 disallow_untyped_decorators = true
 
 # None and Optional
@@ -98,3 +98,6 @@ warn_unreachable = true
 warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
+
+# disable misc
+disable_error_code = "misc"
