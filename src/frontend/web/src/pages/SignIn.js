@@ -60,6 +60,7 @@ export default function SignIn() {
                     Zaloguj się
                 </Typography>
                 {alert.open && <Alert severity={alert.severity}>{alert.message}</Alert>}
+                {/* TODO : add https://mui.com/material-ui/react-text-field/#validation */}
                 <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
                     <TextField
                         margin="normal"
