@@ -63,7 +63,7 @@ export default function SignUp() {
             <CssBaseline />
             <Box
                 sx={{
-                    marginTop: 8,
+                    marginTop: 18,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -76,6 +76,7 @@ export default function SignUp() {
                     Zarejestruj się
                 </Typography>
                 {alert.open && <Alert severity={alert.severity}>{alert.message}</Alert>}
+                {/* TODO : add https://mui.com/material-ui/react-text-field/#validation */}
                 <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
                     <Grid container spacing={2}>
                         <Grid item xs={12} sm={6}>
