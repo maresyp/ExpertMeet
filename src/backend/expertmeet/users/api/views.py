@@ -1,9 +1,18 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from users.models import Profile
 
-from .serializers import NewUserSerializer
+from .serializers import NewUserSerializer, ProfileSerializer
 
 
 @api_view(["GET"])
@@ -34,3 +43,13 @@ def register_user(request) -> Response:
     )
 
     return Response(status=status.HTTP_201_CREATED)
+
+@api_view(["GET"])
+def get_profile(request, profile_id: UUID | None = None) -> Response:
+    if profile_id is None:
+        profile = get_object_or_404(Profile, user=request.user)
+    else:
+        profile = get_object_or_404(Profile, id=profile_id)
+
+    serializer = ProfileSerializer(profile)
+    return Response(serializer.data, status=status.HTTP_200_OK)
