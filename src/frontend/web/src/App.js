@@ -8,9 +8,12 @@ import AuthRoutes from './utils/AuthRoutes';
 import SignUp from './pages/SignUp';
 import { AlertProvider } from './context/AlertContext';
 import NavBar from './components/NavBar';
+import React from 'react';
+import MyProfile from './pages/MyProfile';
 
 function App() {
   return (
+    <React.StrictMode>
     <div className="App">
       <Router>
         <AuthProvider>
@@ -24,7 +27,8 @@ function App() {
                 <Route element={<SignUp />} path='/register' />
               </Route>
               <Route element={<PrivateRoutes />}>
-                {/* Private routes */}
+                  {/* Private routes */}
+                  <Route element={<MyProfile />} path='/profile' />
               </Route>
               {/* Fallback route */}
               <Route path="*" element={<HomePage />} />
@@ -33,6 +37,7 @@ function App() {
         </AuthProvider>
       </Router>
     </div>
+    </React.StrictMode>
   );
 }
 
