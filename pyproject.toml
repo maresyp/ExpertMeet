@@ -13,17 +13,9 @@ lint.ignore = [
     "E501",  # Supress line-too-long warnings: trust black's judgement on this one.
     "A003",  # Allow shawoding class attribute: django uses id.
     "B904",  # Allow unchained exceptions: it's fine to raise 404 in django.
-    "E712",  # Allow using if x == False, as it's not always equivalent to if x.
     "E501",  # Supress line-too-long warnings: trust black's judgement on this one.
     "FBT002",# boolean positional arguments
-    "S101",  # assert
-    "T201",  # ignore print statements
-    "TRY003",# Avoid specifying long messages outside the exception class
-    "EM101", # Exception must not use a string literal, assign to variable first
-    "EM102", # Exception must not use an f-string literal, assign to variable first
-    "EM103", # Exception must not use a .format() string directly, assign to variable first
     "PGH003", # Use specific rule codes when ignoring type issues
-    "SIM108", # ternary operator
 ]
 
 lint.fixable = [
@@ -67,7 +59,8 @@ exclude = [
     "node_modules",
     "venv",
     "env",
-    "migrations"
+    "migrations",
+    "tests"
 ]
 
 [tool.mypy]

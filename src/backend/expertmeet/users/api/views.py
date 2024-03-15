@@ -50,7 +50,7 @@ def register_user(request) -> Response:
 
 @api_view(["GET"])
 def get_profile(request, profile_id: UUID | None = None) -> Response:
-    if profile_id is None:
+    if profile_id is None:  # noqa: SIM108
         profile = get_object_or_404(Profile, user=request.user)
     else:
         profile = get_object_or_404(Profile, id=profile_id)
