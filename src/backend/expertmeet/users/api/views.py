@@ -28,6 +28,7 @@ def get_routes(_request):
 
     return Response(routes)
 
+
 @api_view(["POST"])
 def register_user(request) -> Response:
     user_serializer = NewUserSerializer(data=request.data)
@@ -48,12 +49,19 @@ def register_user(request) -> Response:
 
     return Response(status=status.HTTP_201_CREATED)
 
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def get_profile(request):
+    profile = get_object_or_404(Profile, user=request.user)
+
+    serializer = ProfileSerializer(profile)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 @api_view(["GET"])
-def get_profile(request, profile_id: UUID | None = None) -> Response:
-    if profile_id is None:  # noqa: SIM108
-        profile = get_object_or_404(Profile, user=request.user)
-    else:
-        profile = get_object_or_404(Profile, id=profile_id)
+def visit_profile(_request, profile_id: UUID) -> Response:
+    profile = get_object_or_404(Profile, id=profile_id)
 
     serializer = ProfileSerializer(profile)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -62,3 +70,10 @@ def get_profile(request, profile_id: UUID | None = None) -> Response:
 def get_profile_picture(_request, profile_id: UUID) -> FileResponse:
     profile = get_object_or_404(Profile, id=profile_id)
     return FileResponse(Path(profile.profile_image.path).open("rb"), content_type="image/jpg")  # noqa: SIM115 file is closed automatically
+
+@api_view(["Get"])
+def get_profile_feed(_request) -> Response:
+    profiles = Profile.objects.all()
+
+    serializer = ProfileSerializer(profiles, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)

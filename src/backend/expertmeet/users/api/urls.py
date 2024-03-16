@@ -14,6 +14,7 @@ urlpatterns = [
     path("register/", views.register_user, name="register_user"),
     #
     path("profile/", views.get_profile, name="profile"),
-    path("profile/<uuid:profile_id>/", views.get_profile, name="profile_visit"),
+    path("profile/feed", views.get_profile_feed, name="profile"),
+    path("profile/visit/<uuid:profile_id>/", views.visit_profile, name="profile_visit"),
     path("profile/get_avatar/<uuid:profile_id>", views.get_profile_picture, name="profile_picture"),
 ]

@@ -13,9 +13,12 @@ import MenuIcon from '@mui/icons-material/Menu';
 import AuthContext from '../context/AuthContext';
 import NavBarLoggedInButtons, { DrawerLoggedIn } from './NavBarLoggedIn';
 import NavBarLoggedOutButtons, { DrawerLoggedOut } from './NavBarLoggedOut';
+import { Link } from 'react-router-dom';
 
 const logoStyle = {
-    width: '140px',
+    paddingLeft: "12px",
+    paddingTop: "4px",
+    width: '160px',
     height: 'auto',
     cursor: 'pointer',
 };
@@ -65,22 +68,13 @@ function NavBar() {
                                 px: 0,
                             }}
                         >
+                            <Link to="/">
                             <img
-                                src={
-                                    'https://assets-global.website-files.com/61ed56ae9da9fd7e0ef0a967/61f12e6faf73568658154dae_SitemarkDefault.svg'
-                                }
+                                    src="/logo.png"
                                 style={logoStyle}
                                 alt="logo of ExpertMeet"
                             />
-                            <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-                                <MenuItem
-                                    sx={{ py: '6px', px: '12px' }}
-                                >
-                                    <Typography variant="body2" color="text.primary">
-                                        Szukajka ----
-                                    </Typography>
-                                </MenuItem>
-                            </Box>
+                            </Link>
                         </Box>
                         {user ? <NavBarLoggedInButtons /> : <NavBarLoggedOutButtons />}
                         <Box sx={{ display: { sm: '', md: 'none' } }}>

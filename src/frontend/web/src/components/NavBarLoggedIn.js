@@ -9,6 +9,7 @@ import MailIcon from '@mui/icons-material/Mail'
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import Tooltip from '@mui/material/Tooltip';
 import Avatar from '@mui/material/Avatar';
+import { Link } from 'react-router-dom';
 
 export function DrawerLoggedIn() {
     return (
@@ -74,7 +75,9 @@ const NavBarLoggedInButtons = () => {
                     <NotificationsIcon color="action" />
                 </Badge>
             </Tooltip>
-            <Avatar alt="U" src={`http://127.0.0.1:8080/api/profile/get_avatar/${user.profile_id}`} />
+            <Link to="/profile">
+                <Avatar alt="U" src={`http://127.0.0.1:8080/api/profile/get_avatar/${user.profile_id}`} />
+            </Link>
             <Button onClick={logoutHandler}
                 color="primary"
                 variant="contained"
