@@ -23,14 +23,22 @@ class Profile(models.Model):
     def __str__(self) -> str:
         return f"Profile of {self.user.email} {self.id}"
 
+class ReviewSummary(models.Model):
+    profile = models.OneToOneField(Profile, on_delete=models.CASCADE, primary_key=True)
+    ratings_mean = models.FloatField(default=0.0)
+    ratings_count = models.IntegerField(default=0)
+
+    def __str__(self) -> str:
+        return f"Review summary for {self.profile.user.email} profile"
+
 
 class Review(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     author = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
-    profile = models.OneToOneField(Profile, on_delete=models.CASCADE, null=False)
-    rating = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(5)])
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=False)
+    rating = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(5)])
     content = models.CharField(max_length=256)
     date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
-        return f"{self.rating} star review for {self.profile_ref.user.email}"
+        return f"{self.rating} star review for {self.profile.user.email}"
