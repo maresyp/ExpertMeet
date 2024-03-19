@@ -25,7 +25,7 @@ def create_reviews_summary(sender, instance, created, **kwargs):  # noqa: ARG001
 
 
 @receiver([post_save, post_delete], sender=Review)
-def update_reviews_summary(sender, instance, created, **kwargs):  # noqa: ARG001
+def update_reviews_summary(sender, instance, created=None, **kwargs):  # noqa: ARG001
     """Each time Review is created or modified, corresponding ReviewSummary needs to be updated"""
     reviews = Review.objects.filter(profile=instance.profile)
     ratings_mean = reviews.aggregate(Avg("rating"))["rating__avg"] or 0
