@@ -16,7 +16,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from utils.permissions.is_resource_owner import IsResourceOwner
 
-from .serializers import ProfileSerializer, ReviewSerializer, ReviewSummarySerializer
+from .serializers import ProfileSerializer, ReviewDeserializer, ReviewSerializer, ReviewSummarySerializer
 
 
 @api_view(["POST"])
@@ -53,7 +53,26 @@ def get_profile_feed(_request) -> Response:
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def add_review(request, profile_id: UUID) -> Response:
-    raise NotImplementedError("TODO: implement")
+    deserializer = ReviewDeserializer(data=request.data)
+    if not deserializer.is_valid():
+        return Response(deserializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # Prevent self review
+    profile = get_object_or_404(Profile, id=profile_id)
+    if profile.user == request.user:
+        return Response({"errors": ["Self review is not possible"]}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+    if profile.review_set.filter(author=request.user).exists():
+        return Response({"errors": ["Can't make more than one review for given profile"]}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+    Review.objects.create(
+        author=request.user,
+        profile=profile,
+        rating=deserializer.data["rating"],
+        content=deserializer.data["content"],
+    )
+
+    return Response(status=status.HTTP_201_CREATED)
 
 
 @api_view(["DELETE"])
