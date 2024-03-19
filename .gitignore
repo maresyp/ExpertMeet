@@ -161,4 +161,4 @@ cython_debug/
 
 !/src/frontend/expertmeet/.gitignore
 .DS_Store
-tests/reports
+src/backend/tests/reports
