@@ -42,7 +42,7 @@ def get_profile_picture(_request, profile_id: UUID) -> FileResponse:
     return FileResponse(Path(profile.profile_image.path).open("rb"), content_type="image/jpg")  # noqa: SIM115 file is closed automatically
 
 
-@api_view(["Get"])
+@api_view(["GET"])
 def get_profile_feed(_request) -> Response:
     profiles = Profile.objects.all()
 
