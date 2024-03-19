@@ -5,12 +5,10 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import ReviewSummary from '../components/ReviewSummary';
-import AlertContext from '../context/AlertContext'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert } from '@mui/material';
+import { Alert, Avatar, Divider } from '@mui/material';
 
 const HomePage = () => {
-    const { showAlert } = React.useContext(AlertContext)
     useQueryClient()
 
     const { isLoading, data, error } = useQuery({
@@ -26,7 +24,7 @@ const HomePage = () => {
 
 
     if (error) {
-        showAlert("Nie udało się załadować strony.", "error")
+        console.log(error);
     }
 
     return (
@@ -48,6 +46,8 @@ const HomePage = () => {
                     Array.isArray(data) ? data.map((item, index) => (
                         <Box mb={2} key={index}>
                             <Paper elevation={1}>
+                                <Avatar alt="User" src={`http://127.0.0.1:8080/api/profile/get_avatar/${item.id}`} />
+                                <Divider orientation="vertical" flexItem />
                                 <div key={index}>
                                     {JSON.stringify(item)}
                                     <ReviewSummary profile_id={item.id} />

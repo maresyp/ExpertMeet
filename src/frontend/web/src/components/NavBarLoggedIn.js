@@ -10,52 +10,10 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import Tooltip from '@mui/material/Tooltip';
 import Avatar from '@mui/material/Avatar';
 import { Link } from 'react-router-dom';
-
-export function DrawerLoggedIn() {
-    return (
-        <Box
-            sx={{
-                minWidth: '60dvw',
-                p: 2,
-                backgroundColor: 'background.paper',
-                flexGrow: 1,
-            }}
-        >
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'end',
-                    flexGrow: 1,
-                }}
-            >
-            </Box>
-            <MenuItem>
-                Features
-            </MenuItem>
-            <Divider />
-            <MenuItem>
-                <Button
-                    color="primary"
-                    variant="contained"
-                    component="a"
-                    href="/material-ui/getting-started/templates/sign-up/"
-                    target="_blank"
-                    sx={{ width: '100%' }}
-                >
-                    Wyloguj się
-                </Button>
-            </MenuItem>
-        </Box>
-    )
-}
+import AccountMenu from './AccountMenu';
 
 const NavBarLoggedInButtons = () => {
-    const { logoutUser, user } = React.useContext(AuthContext)
 
-    const logoutHandler = () => {
-        logoutUser()
-    }
 
     return (
         <Box
@@ -75,18 +33,7 @@ const NavBarLoggedInButtons = () => {
                     <NotificationsIcon color="action" />
                 </Badge>
             </Tooltip>
-            <Link to="/profile">
-                <Avatar alt="U" src={`http://127.0.0.1:8080/api/profile/get_avatar/${user.profile_id}`} />
-            </Link>
-            <Button onClick={logoutHandler}
-                color="primary"
-                variant="contained"
-                size="small"
-                component="a"
-                href="#"
-            >
-                Wyloguj się
-            </Button>
+            <AccountMenu />
         </Box>
     )
 }

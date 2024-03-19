@@ -3,16 +3,11 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
-import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 
-import Typography from '@mui/material/Typography';
-import MenuItem from '@mui/material/MenuItem';
-import Drawer from '@mui/material/Drawer';
-import MenuIcon from '@mui/icons-material/Menu';
 import AuthContext from '../context/AuthContext';
-import NavBarLoggedInButtons, { DrawerLoggedIn } from './NavBarLoggedIn';
-import NavBarLoggedOutButtons, { DrawerLoggedOut } from './NavBarLoggedOut';
+import NavBarLoggedInButtons from './NavBarLoggedIn';
+import NavBarLoggedOutButtons from './NavBarLoggedOut';
 import { Link } from 'react-router-dom';
 
 const logoStyle = {
@@ -24,12 +19,7 @@ const logoStyle = {
 };
 
 function NavBar() {
-    const [open, setOpen] = React.useState(false);
     const { user } = React.useContext(AuthContext)
-
-    const toggleDrawer = (newOpen) => () => {
-        setOpen(newOpen);
-    };
 
     return (
         <div>
@@ -61,7 +51,6 @@ function NavBar() {
                     >
                         <Box
                             sx={{
-                                flexGrow: 1,
                                 display: 'flex',
                                 alignItems: 'center',
                                 ml: '-18px',
@@ -77,20 +66,6 @@ function NavBar() {
                             </Link>
                         </Box>
                         {user ? <NavBarLoggedInButtons /> : <NavBarLoggedOutButtons />}
-                        <Box sx={{ display: { sm: '', md: 'none' } }}>
-                            <Button
-                                variant="text"
-                                color="primary"
-                                aria-label="menu"
-                                onClick={toggleDrawer(true)}
-                                sx={{ minWidth: '30px', p: '4px' }}
-                            >
-                                <MenuIcon />
-                            </Button>
-                            <Drawer anchor="right" open={open} onClose={toggleDrawer(false)}>
-                                {user ? <DrawerLoggedIn /> : <DrawerLoggedOut />}
-                            </Drawer>
-                        </Box>
                     </Toolbar>
                 </Container>
             </AppBar>
