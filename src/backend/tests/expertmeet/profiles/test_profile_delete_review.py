@@ -41,6 +41,16 @@ def test_not_authenticated(api_client: APIClient):
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 @pytest.mark.django_db
+def test_not_existing(api_client: APIClient, create_user):
+    user = create_user
+    api_client.force_authenticate(user=user)
+    response = api_client.delete(
+        path=reverse('delete_review', kwargs={'review_id': uuid.uuid4()})
+    )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+@pytest.mark.django_db
 def test_resource_not_owned(api_client: APIClient, django_user_model, create_user):
     user1 = create_user
     review = Review.objects.create(
