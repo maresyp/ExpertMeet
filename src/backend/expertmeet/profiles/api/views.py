@@ -9,14 +9,14 @@ from pathlib import Path
 
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
-from profiles.models import Profile, Review, ReviewSummary
+from profiles.models import Category, Profile, Review, ReviewSummary
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from utils.permissions.is_resource_owner import IsResourceOwner
 
-from .serializers import ProfileSerializer, ReviewDeserializer, ReviewSerializer, ReviewSummarySerializer
+from .serializers import CategoryDeserializer, CategorySerializer, ProfileSerializer, ReviewDeserializer, ReviewSerializer, ReviewSummarySerializer
 
 
 @api_view(["POST"])
@@ -117,4 +117,23 @@ def get_review_summary(_request, profile_id: UUID) -> Response:
     review_summary = ReviewSummary.objects.filter(profile=profile_id).first()
 
     serializer = ReviewSummarySerializer(review_summary)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def assign_profile_category(request) -> Response:
+    raise NotImplementedError("TODO:")
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def remove_profile_category(request) -> Response:
+    raise NotImplementedError("TODO:")
+
+
+@api_view(["GET"])
+def get_profile_categories(_request) -> Response:
+    categories = Category.objects.all()
+    serializer = CategorySerializer(categories, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)

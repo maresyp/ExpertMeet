@@ -16,4 +16,8 @@ urlpatterns = [
     path("profile/add_review/<uuid:profile_id>", views.add_review, name="add_review"),
     path("profile/delete_review/<uuid:review_id>", views.delete_review, name="delete_review"),
     path("profile/update_review/<uuid:review_id>", views.update_review, name="update_review"),
+    #
+    path("profile/get_categories", views.get_profile_categories, name="get_profile_categories"),
+    path("profile/assign_category", views.assign_profile_category, name="add_profile_category"),
+    path("profile/remove_category", views.remove_profile_category, name="remove_profile_category"),
 ]

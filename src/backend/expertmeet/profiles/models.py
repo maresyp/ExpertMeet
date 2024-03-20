@@ -21,6 +21,7 @@ class Profile(models.Model):
     profile_image = models.ImageField(upload_to="profiles", null=True, default="profiles/user-default.png")
     bio = models.CharField(max_length=256, default="")
     description = models.CharField(max_length=1028, default="")
+    category = models.ForeignKey("Category", on_delete=models.DO_NOTHING, null=True)
 
     def __str__(self) -> str:
         return f"Profile of {self.user.email} {self.id}"
@@ -44,3 +45,10 @@ class Review(models.Model):
 
     def __str__(self) -> str:
         return f"{self.rating} star review for {self.profile.user.email}"
+
+class Category(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
+    name = models.CharField(max_length=64)
+
+    def __str__(self) -> str:
+        return f"{self.name} category"
