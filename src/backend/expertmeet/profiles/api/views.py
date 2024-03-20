@@ -76,9 +76,14 @@ def add_review(request, profile_id: UUID) -> Response:
 
 
 @api_view(["DELETE"])
-@permission_classes([IsAuthenticated & IsResourceOwner])
+@permission_classes([IsAuthenticated])
 def delete_review(request, review_id: UUID) -> Response:
-    raise NotImplementedError("TODO: implement")
+    instance = get_object_or_404(Review, id=review_id)
+    if not IsResourceOwner().has_object_permission(request, None, instance):
+        return Response({"errors": ["You must own resource to delete id"]}, status=status.HTTP_403_FORBIDDEN)
+
+    instance.delete()
+    return Response(status=status.HTTP_200_OK)
 
 
 @api_view(["PUT"])

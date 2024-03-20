@@ -8,4 +8,4 @@ class IsResourceOwner(BasePermission):
 
     def has_object_permission(self, request, _view, obj):
         # Permissions are only granted to the owner of the snippet.
-        return obj.owner == request.user
+        return obj.author == request.user
