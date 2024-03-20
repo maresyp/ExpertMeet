@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django.core.validators import MaxValueValidator, MinValueValidator
 from profiles.models import Profile, Review, ReviewSummary
 from rest_framework.serializers import CharField, FloatField, ModelSerializer, Serializer
@@ -6,8 +8,8 @@ from rest_framework.serializers import CharField, FloatField, ModelSerializer, S
 class ProfileSerializer(ModelSerializer):
     class Meta:
         model = Profile
-        fields = "__all__"
-        # TODO : change fields - remove is_premium
+        fields: ClassVar = ["id", "user"]
+
 
 class ReviewSerializer(ModelSerializer):
     class Meta:
