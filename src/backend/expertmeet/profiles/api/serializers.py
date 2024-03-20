@@ -8,7 +8,7 @@ from rest_framework.serializers import CharField, FloatField, ModelSerializer, S
 class ProfileSerializer(ModelSerializer):
     class Meta:
         model = Profile
-        fields: ClassVar = ["id", "user"]
+        fields: ClassVar = ["id", "user", "bio"]
 
 
 class ReviewSerializer(ModelSerializer):
