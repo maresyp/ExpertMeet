@@ -68,8 +68,8 @@ def add_review(request, profile_id: UUID) -> Response:
     Review.objects.create(
         author=request.user,
         profile=profile,
-        rating=deserializer.data["rating"],
-        content=deserializer.data["content"],
+        rating=deserializer.validated_data["rating"],
+        content=deserializer.validated_data["content"],
     )
 
     return Response(status=status.HTTP_201_CREATED)
@@ -80,7 +80,7 @@ def add_review(request, profile_id: UUID) -> Response:
 def delete_review(request, review_id: UUID) -> Response:
     instance = get_object_or_404(Review, id=review_id)
     if not IsResourceOwner().has_object_permission(request, None, instance):
-        return Response({"errors": ["You must own resource to delete id"]}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"errors": ["You must own resource to delete it"]}, status=status.HTTP_403_FORBIDDEN)
 
     instance.delete()
     return Response(status=status.HTTP_200_OK)
@@ -89,7 +89,19 @@ def delete_review(request, review_id: UUID) -> Response:
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated & IsResourceOwner])
 def update_review(request, review_id: UUID) -> Response:
-    raise NotImplementedError("TODO: implement")
+    deserializer = ReviewDeserializer(data=request.data)
+    if not deserializer.is_valid():
+        return Response(deserializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    instance = get_object_or_404(Review, id=review_id)
+    if not IsResourceOwner().has_object_permission(request, None, instance):
+        return Response({"errors": ["You must own resource to modify it"]}, status=status.HTTP_403_FORBIDDEN)
+
+    instance.rating = deserializer.validated_data["rating"]
+    instance.content = deserializer.validated_data["content"]
+    instance.save()
+
+    return Response(status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
