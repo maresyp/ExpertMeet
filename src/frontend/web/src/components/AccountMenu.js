@@ -12,15 +12,19 @@ import PersonAdd from '@mui/icons-material/PersonAdd';
 import Settings from '@mui/icons-material/Settings';
 import Logout from '@mui/icons-material/Logout';
 import AuthContext from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export default function AccountMenu() {
     const [anchorEl, setAnchorEl] = React.useState(null);
     const open = Boolean(anchorEl);
     const { logoutUser, user } = React.useContext(AuthContext)
+    const navigate = useNavigate()
 
     const logoutHandler = () => {
         logoutUser()
+    }
+    const handleProfile = () => {
+        navigate("/profile")
     }
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
@@ -82,7 +86,7 @@ export default function AccountMenu() {
                 transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             >
-                <MenuItem onClick={handleClose}>
+                <MenuItem onClick={handleProfile}>
                     <Avatar /> Mój profil
                 </MenuItem>
                 <Divider />

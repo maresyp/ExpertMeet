@@ -28,8 +28,15 @@ const MyProfile = () => {
             }),
     })
 
-    // TODO: Add error handling
+    if (error) {
+        console.log(error);
+    }
 
+    if (isLoading) {
+        return (
+            <p>Loading...</p>
+        )
+    }
 
     return (
         <Container component="main" maxWidth="lg">
