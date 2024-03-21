@@ -37,7 +37,7 @@ function ReviewSummary({ profile_id }) {
     return (
         <div>
             <Rating name="read-only" value={data.ratings_mean} precision={0.5} readOnly />
-            <Typography>Ilość recenzji: {0 + data.ratings_count}</Typography>
+            <Typography>Opinie: {0 + data.ratings_count}</Typography>
         </div>
     )
 }

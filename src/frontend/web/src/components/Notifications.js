@@ -1,33 +1,19 @@
-import * as React from 'react';
-import Box from '@mui/material/Box';
-import Avatar from '@mui/material/Avatar';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import ListItemIcon from '@mui/material/ListItemIcon';
+import { Badge, Box, IconButton, Menu, Tooltip } from '@mui/material'
+import * as React from 'react'
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
 import Divider from '@mui/material/Divider';
-import IconButton from '@mui/material/IconButton';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
-import Tooltip from '@mui/material/Tooltip';
-import PersonAdd from '@mui/icons-material/PersonAdd';
-import Settings from '@mui/icons-material/Settings';
-import Logout from '@mui/icons-material/Logout';
-import AuthContext from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import ChatIcon from '@mui/icons-material/Chat';
-import HistoryIcon from '@mui/icons-material/History';
 
-export default function AccountMenu() {
+export default function Notifications() {
+
     const [anchorEl, setAnchorEl] = React.useState(null);
     const open = Boolean(anchorEl);
-    const { logoutUser, user } = React.useContext(AuthContext)
-    const navigate = useNavigate()
 
-    const logoutHandler = () => {
-        logoutUser()
-    }
-    const handleProfile = () => {
-        navigate("/profile")
-    }
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
     };
@@ -35,12 +21,10 @@ export default function AccountMenu() {
         setAnchorEl(null);
     };
 
-
-
     return (
         <React.Fragment>
             <Box sx={{ display: 'flex', alignItems: 'center', textAlign: 'center' }}>
-                <Tooltip title="Moje konto">
+                <Tooltip title="Powiadomienia">
                     <IconButton
                         onClick={handleClick}
                         size="small"
@@ -49,7 +33,9 @@ export default function AccountMenu() {
                         aria-haspopup="true"
                         aria-expanded={open ? 'true' : undefined}
                     >
-                        <Avatar alt="E" src={`http://127.0.0.1:8080/api/profile/get_avatar/${user.profile_id}`} />
+                        <Badge badgeContent={3} color="primary">
+                            <NotificationsIcon color="action" />
+                        </Badge>
                     </IconButton>
                 </Tooltip>
             </Box>
@@ -88,35 +74,36 @@ export default function AccountMenu() {
                 transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             >
-                <MenuItem onClick={handleProfile}>
-                    <Avatar /> Mój profil
-                </MenuItem>
-                <MenuItem onClick={handleClose}>
-                    <ListItemIcon>
-                        <ChatIcon />
-                    </ListItemIcon>
-                    Czat
-                </MenuItem>
-                <MenuItem onClick={handleClose}>
-                    <ListItemIcon>
-                        <HistoryIcon />
-                    </ListItemIcon>
-                    Historia
-                </MenuItem>
-                <Divider />
-                <MenuItem onClick={handleClose}>
-                    <ListItemIcon>
-                        <Settings fontSize="small" />
-                    </ListItemIcon>
-                    Ustawienia
-                </MenuItem>
-                <MenuItem onClick={logoutHandler}>
-                    <ListItemIcon>
-                        <Logout fontSize="small" />
-                    </ListItemIcon>
-                    Wyloguj się
-                </MenuItem>
+                <List sx={{
+                    overflow: 'auto',
+                    maxHeight: 300,
+                    width: '100%',
+                    maxWidth: 5000,
+                }}>
+                    <ListItem alignItems="flex-start">
+                        <ListItemAvatar>
+                            <Avatar alt="Remy Sharp" src="/static/images/avatar/1.jpg" />
+                        </ListItemAvatar>
+                        <ListItemText
+                            primary="Brunch this weekend?"
+                            secondary={
+                                <React.Fragment>
+                                    <Typography
+                                        sx={{ display: 'inline' }}
+                                        component="span"
+                                        variant="body2"
+                                        color="text.primary"
+                                    >
+                                        Ali Connors
+                                    </Typography>
+                                    {" — I'll be in your neighborhood doing errands this…"}
+                                </React.Fragment>
+                            }
+                        />
+                    </ListItem>
+                    <Divider variant="inset" component="li" />
+                </List>
             </Menu>
         </React.Fragment>
-    );
+    )
 }

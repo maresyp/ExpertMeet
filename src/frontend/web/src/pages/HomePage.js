@@ -6,7 +6,8 @@ import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import ReviewSummary from '../components/ReviewSummary';
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Avatar, Divider } from '@mui/material';
+import { Alert, Avatar, Divider, Typography } from '@mui/material';
+import { Link } from 'react-router-dom';
 
 const HomePage = () => {
     useQueryClient()
@@ -21,6 +22,10 @@ const HomePage = () => {
                 return res.json()
             }),
     })
+
+    const handleClick = () => {
+        console.log('Box clicked');
+    };
 
 
     if (error) {
@@ -46,15 +51,23 @@ const HomePage = () => {
                     Array.isArray(data) ? data.map((item, index) => (
                         <Box mb={2} key={index}>
                             <Paper elevation={1}>
-                                <Avatar alt="User" src={`http://127.0.0.1:8080/api/profile/get_avatar/${item.id}`} />
-                                <Divider orientation="vertical" flexItem />
+                                <Box onClick={handleClick} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <Avatar alt="User" src={`http://127.0.0.1:8080/api/profile/get_avatar/${item.id}`} />
+                                    <Typography variant='h5'>{item.username}</Typography>
+                                </Box>
+                                <Divider flexItem />
                                 <div key={index}>
-                                    {JSON.stringify(item)}
+                                    <Typography variant='h6'>
+                                        Informacje:
+                                    </Typography>
+                                    {item.bio}
+                                    <br />
+                                    <br />
                                     <ReviewSummary profile_id={item.id} />
                                 </div>
                             </Paper>
                         </Box>
-                    )) : <div>{JSON.stringify(data)}</div>
+                    )) : <p></p>
                 )}
             </Box>
         </Container>
