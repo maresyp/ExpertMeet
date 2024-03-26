@@ -19,9 +19,9 @@ class Profile(models.Model):
     is_premium = models.BooleanField(default=False)
     status = models.IntegerField(choices=ProfileStatus, default=ProfileStatus.DISABLED)
     profile_image = models.ImageField(upload_to="profiles", null=True, default="profiles/user-default.png")
-    bio = models.CharField(max_length=256, default="")
-    description = models.CharField(max_length=1028, default="")
-    category = models.ForeignKey("Category", on_delete=models.DO_NOTHING, null=True)
+    bio = models.CharField(max_length=256, default="", blank=True)
+    description = models.CharField(max_length=1028, default="", blank=True)
+    category = models.ForeignKey("Category", on_delete=models.DO_NOTHING, null=True, blank=True)
 
     def __str__(self) -> str:
         return f"Profile of {self.user.email} {self.id}"

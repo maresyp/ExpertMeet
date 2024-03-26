@@ -2,13 +2,18 @@ from typing import ClassVar
 
 from django.core.validators import MaxValueValidator, MinValueValidator
 from profiles.models import Category, Profile, Review, ReviewSummary
-from rest_framework.serializers import CharField, FloatField, ModelSerializer, Serializer, UUIDField
+from rest_framework.serializers import CharField, FloatField, ModelSerializer, Serializer, SerializerMethodField, UUIDField
 
 
 class ProfileSerializer(ModelSerializer):
+    username = SerializerMethodField()
+
     class Meta:
         model = Profile
-        fields: ClassVar = ["id", "user", "bio"]
+        fields: ClassVar = ["id", "username", "bio"]
+
+    def get_username(self, obj) -> str:
+        return f"{obj.user.first_name} {obj.user.last_name}"
 
 
 class ReviewSerializer(ModelSerializer):
