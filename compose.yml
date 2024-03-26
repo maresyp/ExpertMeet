@@ -11,7 +11,7 @@ services:
     ports:
       - 8080:8080
     depends_on:
-      - db-postgres
+      - db-postgres-web
 
   frontend-web-server:
     container_name: expertmeet-frontend-web-server
@@ -21,12 +21,22 @@ services:
       - 80:80
     depends_on:
       - backend-web-server
+      - notifications-server
       # TODO : add second server
+
+  notifications-server:
+      container_name: expertmeet-notifications-server
+      env_file:
+      - .env
+      expose:
+        - 8081
+      build:
+        src/backend/notifications
 
   # TODO: add messaging web server
 
-  db-postgres:
-    container_name: expertmeet-db-web
+  db-postgres-web:
+    container_name: expertmeet-web-db
     image: postgres
     user: postgres
     restart: "on-failure"
@@ -46,22 +56,27 @@ services:
       timeout: 5s
       retries: 5
 
-  db-mongo:
-    container_name: expertmeet-db-mongo
-    image: mongo
+  db-postgres-notifications:
+    container_name: expertmeet-notifications-db
+    image: postgres
+    user: postgres
     restart: "on-failure"
     volumes:
-      - db-data:/data/db
+      - db-notifications:/var/lib/postgresql/data
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_PORT=5433
     expose:
-      - 27017
-    ports: # TODO : hide this port after testing is done
-      - 27017:27017
+      - 5433
     healthcheck:
-      test: [ "CMD", "mongo", "--eval", "db.stats()" ]
+      test: [ "CMD", "pg_isready" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
 volumes:
   db-data:
+    driver: local
+  db-notifications:
     driver: local
