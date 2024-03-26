@@ -16,7 +16,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from utils.permissions.is_resource_owner import IsResourceOwner
 
-from .serializers import CategoryDeserializer, CategorySerializer, ProfileSerializer, ReviewDeserializer, ReviewSerializer, ReviewSummarySerializer
+from .serializers import CategorySerializer, ProfileSerializer, ReviewDeserializer, ReviewSerializer, ReviewSummarySerializer
 
 
 @api_view(["POST"])
@@ -122,14 +122,16 @@ def get_review_summary(_request, profile_id: UUID) -> Response:
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def assign_profile_category(request) -> Response:
-    raise NotImplementedError("TODO:")
+def assign_profile_category(_request) -> Response:
+    msg: str = "TODO: implement assign_profile_category"
+    raise NotImplementedError(msg)
 
 
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
-def remove_profile_category(request) -> Response:
-    raise NotImplementedError("TODO:")
+def remove_profile_category(_request) -> Response:
+    msg: str = "TODO: implement remove_profile_category"
+    raise NotImplementedError(msg)
 
 
 @api_view(["GET"])
