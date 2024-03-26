@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import AccountMenu from './AccountMenu';
-import Notifications from './Notifications';
+import AccountMenu from '../AccountMenu';
+import Notifications from '../Notifications';
 
 const NavBarLoggedInButtons = () => {
 

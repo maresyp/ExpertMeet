@@ -7,7 +7,7 @@ import SignIn from './pages/SignIn';
 import AuthRoutes from './utils/AuthRoutes';
 import SignUp from './pages/SignUp';
 import { AlertProvider } from './context/AlertContext';
-import NavBar from './components/NavBar';
+import NavBar from './components/navbar/NavBar';
 import React from 'react';
 import MyProfile from './pages/MyProfile';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

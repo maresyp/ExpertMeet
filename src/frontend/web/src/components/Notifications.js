@@ -78,7 +78,7 @@ export default function Notifications() {
                     overflow: 'auto',
                     maxHeight: 300,
                     width: '100%',
-                    maxWidth: 5000,
+                    maxWidth: 500,
                 }}>
                     <ListItem alignItems="flex-start">
                         <ListItemAvatar>

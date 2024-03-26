@@ -5,7 +5,7 @@ import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Container from '@mui/material/Container';
 
-import AuthContext from '../context/AuthContext';
+import AuthContext from '../../context/AuthContext';
 import NavBarLoggedInButtons from './NavBarLoggedIn';
 import NavBarLoggedOutButtons from './NavBarLoggedOut';
 import { Link } from 'react-router-dom';
@@ -58,11 +58,11 @@ function NavBar() {
                             }}
                         >
                             <Link to="/">
-                            <img
+                                <img
                                     src="/logo.png"
-                                style={logoStyle}
-                                alt="logo of ExpertMeet"
-                            />
+                                    style={logoStyle}
+                                    alt="logo of ExpertMeet"
+                                />
                             </Link>
                         </Box>
                         {user ? <NavBarLoggedInButtons /> : <NavBarLoggedOutButtons />}
