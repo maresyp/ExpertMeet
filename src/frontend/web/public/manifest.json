@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "ExpertMeet",
+  "name": "Web application for on-demand video consultations with specialists",
   "icons": [
     {
       "src": "favicon.ico",

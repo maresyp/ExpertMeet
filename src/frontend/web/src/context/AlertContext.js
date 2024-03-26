@@ -9,12 +9,12 @@ export const AlertProvider = ({ children }) => {
     const [alert, setAlert] = React.useState({ open: false, message: '', severity: '' });
     const navigate = useNavigate()
 
-    const showAlert = (message, severity, timeout = 3000) => {
+    const showAlert = (message, severity, timeout = 6000) => {
         setAlert({ open: true, message, severity });
         setTimeout(() => setAlert({ open: false, message: '', severity: '' }), timeout);
     };
 
-    const navigateWithAlert = (path, message, severity, timeout = 3000) => {
+    const navigateWithAlert = (path, message, severity, timeout = 6000) => {
         navigate(path);
         showAlert(message, severity, timeout);
     };

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -14,6 +16,7 @@ def get_routes(_request):
     ]
 
     return Response(routes)
+
 
 @api_view(["POST"])
 def register_user(request) -> Response:

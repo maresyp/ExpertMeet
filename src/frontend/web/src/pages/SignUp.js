@@ -51,7 +51,7 @@ export default function SignUp() {
         if (response.status === 201) {
             navigateWithAlert('/login', 'Utworzono nowe konto, wprowadź swoje dane.', 'success', 10000)
         } else {
-            // TODO: This need error handling ( network errors )
+            // TODO: This need error handling ( network errors ) rewrite with react query
             const data = await response.json();
             console.log(data);
             showAlert('Nie udało się utworzyć konta', 'error')

@@ -16,28 +16,30 @@ export const AuthProvider = ({ children }) => {
 
     let updateToken = async () => {
         console.log("Trying to update token");
-        let response = await fetch(
+        await fetch(
             'http://127.0.0.1:8080/api/token/refresh/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ 'refresh': authTokens?.refresh })
+        }).then(res => {
+            if (!res.ok) {
+                clearUserData()
+                throw new Error('Failed to fetch, status=' + res.status)
+            }
+            return res.json()
+        }).then(d => {
+            setAuthTokens(d)
+            setUser(jwtDecode(d.access))
+            localStorage.setItem('authTokens', JSON.stringify(d))
+        }).catch(e => {
+            console.log("updateToken " + e);
+        }).finally(() => {
+            if (loading) {
+                setLoading(false)
+            }
         })
-        // TODO: add error handling
-        const data = await response.json();
-        if (response.status === 200) {
-            setAuthTokens(data)
-            setUser(jwtDecode(data.access))
-            localStorage.setItem('authTokens', JSON.stringify(data))
-        } else {
-            // TODO : add some kind of message about being logged out ?
-            clearUserData()
-        }
-
-        if (loading) {
-            setLoading(false)
-        }
     }
 
     let loginUser = async (login, pwd) => {
