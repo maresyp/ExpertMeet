@@ -32,6 +32,7 @@ jobs:
     - name: Test with Tox
       env:
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        DEBUG: ${{ env.DEBUG }}
       run: tox
 
     - name: Upload artifacts
