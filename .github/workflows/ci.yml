@@ -32,6 +32,7 @@ jobs:
     - name: Test with Tox
       env:
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        DEBUG: ${{ vars.DEBUG }}
       run: tox
 
     - name: Upload artifacts
@@ -42,8 +43,8 @@ jobs:
         overwrite: true
         if-no-files-found: error
         path: |
-         tests/reports/**/*.html
-         tests/reports/**/*.css
-         tests/reports/**/*.js
-         tests/reports/**/*.json
-         tests/reports/**/*.png
+         src/backend/tests/reports/**/*.html
+         src/backend/tests/reports/**/*.css
+         src/backend/tests/reports/**/*.js
+         src/backend/tests/reports/**/*.json
+         src/backend/tests/reports/**/*.png
