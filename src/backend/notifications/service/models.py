@@ -12,7 +12,7 @@ class Notification(models.Model):
         MISSED_CALL = (1, _lazy("Missed call"))
 
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
-    receiver = models.UUIDField(unique=True, editable=False)
+    profile = models.UUIDField(unique=False, editable=False)
     registration_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
