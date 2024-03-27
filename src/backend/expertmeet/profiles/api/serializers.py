@@ -10,7 +10,12 @@ class ProfileSerializer(ModelSerializer):
 
     class Meta:
         model = Profile
-        fields: ClassVar = ["id", "username", "bio"]
+        fields: ClassVar = [
+            "id",
+            "username",
+            "bio",
+            "is_premium",
+        ]
 
     def get_username(self, obj) -> str:
         return f"{obj.user.first_name} {obj.user.last_name}"
