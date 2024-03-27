@@ -45,8 +45,15 @@ INSTALLED_APPS = [
     "service",
 ]
 
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
+}
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    #
+    "corsheaders.middleware.CorsMiddleware",
+    #
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
