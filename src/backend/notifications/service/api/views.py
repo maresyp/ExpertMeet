@@ -34,3 +34,18 @@ def add_notification(request) -> Response:
     )
 
     return Response(status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated & CanRegisterNotifications])
+def mark_notification_as_read(request) -> Response:
+    raise NotImplementedError
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def mark_all_notifications_as_read(request) -> Response:
+    profile_id = request.user.profile_id
+    notifications = Notification.objects.filter(profile=profile_id)
+    notifications.delete()
+
+    return Response(status=status.HTTP_200_OK)
