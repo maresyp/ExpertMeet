@@ -3,7 +3,7 @@ from rest_framework.test import APIClient
 import uuid
 import pytest
 
-API_PROFILE_ID = uuid.UUID('12345678123456781234567812345678')
+API_PROFILE_ID = str(uuid.UUID('12345678123456781234567812345678'))
 
 class CustomRefreshToken(RefreshToken):
     def __init__(self, *args, **kwargs):
@@ -15,6 +15,6 @@ class CustomRefreshToken(RefreshToken):
 def auth_api_client(db, django_user_model) -> APIClient:
     user = django_user_model.objects.create_user(username="test@test.com", password="test")
     client = APIClient()
-    token = RefreshToken.for_user(user)
+    token = CustomRefreshToken.for_user(user=user)
     client.credentials(HTTP_AUTHORIZATION=f'Bearer {token.access_token}')
     return client
