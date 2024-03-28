@@ -13,7 +13,7 @@ class Notification(models.Model):
 
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     profile = models.UUIDField(unique=False, editable=False)
-    registration_date = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
         return super().__str__()

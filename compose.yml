@@ -35,6 +35,17 @@ services:
       depends_on:
         - db-postgres-notifications
 
+  notifications-celery:
+    container_name: expertmeet-notifications-celery
+    env_file:
+      - .env
+    build:
+      context: src/backend/notifications
+      dockerfile: DockerfileCelery
+    depends_on:
+      - notifications-server
+      - message-broker
+
   conversations-server:
         container_name: expertmeet-conversations-server
         env_file:
@@ -105,6 +116,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  message-broker:
+    container_name: expertmeet-broker
+    image: rabbitmq
+    expose:
+      - 5672
 
 volumes:
   db-data:
