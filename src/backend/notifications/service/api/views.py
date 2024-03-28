@@ -18,4 +18,5 @@ def get_notifications_feed(request) -> Response:
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_notifications_count(request) -> Response:
-    return Response(status=status.HTTP_200_OK)
+    notifications_count: int = Notification.objects.filter(profile=request.user.profile_id).count()
+    return Response({"count": notifications_count}, status=status.HTTP_200_OK)

@@ -12,7 +12,7 @@ def mock_profile_id():
 
 @pytest.fixture
 def url():
-    return reverse('get_notifications_feed')
+    return reverse('get_notifications_count')
 
 def test_not_authenticated(url):
     response = APIClient().get(path=url)
@@ -22,18 +22,18 @@ def test_correct_request(url, auth_api_client):
     response = auth_api_client.get(path=url)
     assert response.status_code == status.HTTP_200_OK
 
-
 @pytest.mark.django_db
-def test_get_notification(url, auth_api_client):
+def test_get_notification_count(url, auth_api_client):
     Notification.objects.create(profile=API_PROFILE_ID)
     response = auth_api_client.get(path=url)
 
     assert response.status_code == status.HTTP_200_OK
     assert response.data is not None
     assert len(response.data) == 1
+    assert response.data['count'] == 1
 
 @pytest.mark.django_db
-def test_get_multiple_notifications(url, auth_api_client):
+def test_get_multiple_notifications_count(url, auth_api_client):
     for _ in range(2):
         Notification.objects.create(profile=API_PROFILE_ID)
         Notification.objects.create(profile=uuid.uuid4())
@@ -42,4 +42,5 @@ def test_get_multiple_notifications(url, auth_api_client):
 
     assert response.status_code == status.HTTP_200_OK
     assert response.data is not None
-    assert len(response.data) == 2
+    assert len(response.data) == 1
+    assert response.data['count'] == 2
