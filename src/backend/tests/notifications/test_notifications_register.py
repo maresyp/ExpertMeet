@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 from django.urls import reverse
 from rest_framework import status
 from ..utils.auth_api_client import auth_api_client, API_PROFILE_ID
-from rest_framework_simplejwt.tokens import RefreshToken
+from ..utils.notification_api_client import notification_api_client
 
 @pytest.fixture
 def mock_profile_id():
@@ -15,21 +15,6 @@ def mock_profile_id():
 def url():
     return reverse('add_notification')
 
-class CustomRefreshToken(RefreshToken):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # custom claims
-        self['profile_id'] = API_PROFILE_ID
-        self['CanRegisterNotifications'] = True
-
-@pytest.fixture
-def notification_api_client(db, django_user_model) -> APIClient:
-    """ This client has permissions to register notifications """
-    user = django_user_model.objects.create_user(username="test@test.com", password="test")
-    client = APIClient()
-    token = CustomRefreshToken.for_user(user=user)
-    client.credentials(HTTP_AUTHORIZATION=f'Bearer {token.access_token}')
-    return client
 
 @pytest.mark.django_db
 def test_not_authenticated(url):
