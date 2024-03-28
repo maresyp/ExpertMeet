@@ -45,9 +45,7 @@ INSTALLED_APPS = [
     "service",
 ]
 
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
-}
+REST_FRAMEWORK = {"DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTStatelessUserAuthentication",)}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
