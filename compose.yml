@@ -10,7 +10,7 @@ services:
       - 80:80
     depends_on:
       - expertmeet-nginx-server
-      - notifications-server
+      - notifications-nginx-server
       - conversations-server
 
   expertmeet-nginx-server:
@@ -56,30 +56,41 @@ services:
       timeout: 5s
       retries: 5
 
-  notifications-server:
-      container_name: expertmeet-notifications-server
+  notifications-nginx-server:
+      container_name: notifications-nginx-server
+      env_file:
+      - .env
+      build:
+        src/backend/notifications
+      ports:
+        - 8081:8081
+      depends_on:
+        - notifications-django-server
+
+  notifications-django-server:
+      container_name: notifications-django-server
       env_file:
       - .env
       expose:
-        - 8080
+        - 8000
       build:
         src/backend/notifications
       depends_on:
-        - db-postgres-notifications
+        - notifications-db-postgres
 
-  notifications-celery:
-    container_name: expertmeet-notifications-celery
+  notifications-celery-server:
+    container_name: notifications-celery-server
     env_file:
       - .env
     build:
       context: src/backend/notifications
       dockerfile: DockerfileCelery
     depends_on:
-      - notifications-server
-      - message-broker
+      - notifications-django-server
+      - celery-message-broker
 
-  db-postgres-notifications:
-    container_name: expertmeet-notifications-db
+  notifications-db-postgres:
+    container_name: notifications-db-postgres
     image: postgres
     user: postgres
     restart: "on-failure"
@@ -127,8 +138,8 @@ services:
       timeout: 5s
       retries: 5
 
-  message-broker:
-    container_name: expertmeet-broker
+  celery-message-broker:
+    container_name: celery-message-broker
     image: rabbitmq
     expose:
       - 5672

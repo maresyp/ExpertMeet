@@ -1,4 +1,5 @@
 django
+gunicorn
 python-dotenv
 
 djangorestframework
