@@ -1,3 +1,6 @@
+from uuid import UUID
+
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -36,9 +39,15 @@ def add_notification(request) -> Response:
     return Response(status=status.HTTP_200_OK)
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated & CanRegisterNotifications])
-def mark_notification_as_read(request) -> Response:
-    raise NotImplementedError
+@permission_classes([IsAuthenticated])
+def mark_notification_as_read(request, notification_id: UUID) -> Response:
+    notification = get_object_or_404(Notification, pk=notification_id)
+
+    if notification.profile != UUID(request.user.profile_id):
+        return Response({"errors": ["You must own notification to mark it as read."]}, status=status.HTTP_403_FORBIDDEN)
+
+    notification.delete()
+    return Response(status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
