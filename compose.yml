@@ -11,7 +11,7 @@ services:
     depends_on:
       - expertmeet-nginx-server
       - notifications-nginx-server
-      - conversations-server
+      - conversations-nginx-server
 
   expertmeet-nginx-server:
     env_file:
@@ -108,8 +108,19 @@ services:
       timeout: 5s
       retries: 5
 
-  conversations-server:
-        container_name: expertmeet-conversations-server
+  conversations-nginx-server:
+        container_name: conversations-nginx-server
+        env_file:
+        - .env
+        ports:
+          - 8082:8082
+        build:
+          src/backend/conversations
+        depends_on:
+          - conversations-django-server
+
+  conversations-django-server:
+        container_name: conversations-django-server
         env_file:
         - .env
         expose:
