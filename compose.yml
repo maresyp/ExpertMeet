@@ -46,8 +46,6 @@ services:
       - .env
     environment:
       - POSTGRES_PORT=5432
-    ports: # TODO : hide this port after testing is done
-      - 5432:5432
     expose:
       - 5432
     healthcheck:
