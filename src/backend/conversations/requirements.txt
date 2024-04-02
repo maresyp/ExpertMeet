@@ -1,5 +1,7 @@
 django
+
 gunicorn
+uvicorn
 
 python-dotenv
 

@@ -16,4 +16,4 @@ COPY . .
 
 CMD python manage.py makemigrations && \
     python manage.py migrate && \
-    gunicorn conversations.wsgi:application --bind 0.0.0.0:8082
+    gunicorn conversations.asgi:application -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8082
