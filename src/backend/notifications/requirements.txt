@@ -7,7 +7,7 @@ markdown       # Markdown support for the browsable API.
 django-filter  # Filtering support
 
 djangorestframework-simplejwt
-
+psycopg2-binary
 django-cors-headers
 
 celery
