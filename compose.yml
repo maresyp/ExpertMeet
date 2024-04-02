@@ -126,9 +126,9 @@ services:
         build:
           src/backend/conversations
         depends_on:
-          - db-postgres-conversations
+          - conversations-db-postgres
 
-  db-postgres-conversations:
+  conversations-db-postgres:
     container_name: expertmeet-conversations-db
     image: postgres
     user: postgres

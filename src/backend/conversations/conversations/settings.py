@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 dotenv.load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(os.getenv("DEBUG"))
+DEBUG = str(os.getenv("DEBUG")).lower() == "true"
 
 ALLOWED_HOSTS: list[str] = ["127.0.0.1", "localhost"]
 
@@ -86,9 +86,16 @@ if DEBUG:
         },
     }
 else:
-    msg: str = "TODO: PostgreSQL connection is not implemented yet"
-    raise NotImplementedError(msg)
-
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("POSTGRES_DB"),
+            "USER": os.getenv("POSTGRES_USER"),
+            "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+            "HOST": "conversations-db-postgres",
+            "PORT": "5432",
+        },
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
