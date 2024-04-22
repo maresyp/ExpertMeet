@@ -1,15 +1,19 @@
 FROM python:3.12
 
-WORKDIR /code
+# set work directory
+WORKDIR /usr/src/app
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # install dependencies
-COPY ./requirements.txt /code/requirements.txt
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+RUN pip install --upgrade pip
+COPY ./requirements.txt .
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
-COPY . /code/app
+# copy project
+COPY . .
 
-WORKDIR /code/app
-CMD python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0:8080
+CMD python manage.py makemigrations && \
+    python manage.py migrate && \
+    gunicorn notifications.wsgi:application --bind 0.0.0.0:8000

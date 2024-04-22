@@ -2,17 +2,6 @@ version: "3.9"
 name: expertmeet
 
 services:
-  backend-web-server:
-    env_file:
-      - .env
-    container_name: expertmeet-backend-web-server
-    build:
-      src/backend/expertmeet
-    ports:
-      - 8080:8080
-    depends_on:
-      - db-postgres-web
-
   frontend-web-server:
     container_name: expertmeet-frontend-web-server
     build:
@@ -20,33 +9,33 @@ services:
     ports:
       - 80:80
     depends_on:
-      - backend-web-server
-      - notifications-server
-      - conversations-server
+      - expertmeet-nginx-server
+      - notifications-nginx-server
+      - conversations-nginx-server
 
-  notifications-server:
-      container_name: expertmeet-notifications-server
-      env_file:
+  expertmeet-nginx-server:
+    env_file:
       - .env
-      expose:
-        - 8080
-      build:
-        src/backend/notifications
-      depends_on:
-        - db-postgres-notifications
+    container_name: expertmeet-nginx-server
+    build:
+      src/backend/expertmeet/nginx
+    ports:
+      - 8080:8080
+    depends_on:
+      - expertmeet-django-server
 
-  conversations-server:
-        container_name: expertmeet-conversations-server
-        env_file:
-        - .env
-        expose:
-          - 8080
-        build:
-          src/backend/conversations
-        depends_on:
-          - db-postgres-conversations
+  expertmeet-django-server:
+    env_file:
+      - .env
+    container_name: expertmeet-django-server
+    expose:
+      - 8000
+    build:
+      src/backend/expertmeet
+    depends_on:
+      - expertmeet-db-postgres
 
-  db-postgres-web:
+  expertmeet-db-postgres:
     container_name: expertmeet-web-db
     image: postgres
     user: postgres
@@ -57,8 +46,6 @@ services:
       - .env
     environment:
       - POSTGRES_PORT=5432
-    ports: # TODO : hide this port after testing is done
-      - 5432:5432
     expose:
       - 5432
     healthcheck:
@@ -67,8 +54,41 @@ services:
       timeout: 5s
       retries: 5
 
-  db-postgres-notifications:
-    container_name: expertmeet-notifications-db
+  notifications-nginx-server:
+      container_name: notifications-nginx-server
+      env_file:
+      - .env
+      build:
+        src/backend/notifications
+      ports:
+        - 8081:8081
+      depends_on:
+        - notifications-django-server
+
+  notifications-django-server:
+      container_name: notifications-django-server
+      env_file:
+      - .env
+      expose:
+        - 8000
+      build:
+        src/backend/notifications
+      depends_on:
+        - notifications-db-postgres
+
+  notifications-celery-server:
+    container_name: notifications-celery-server
+    env_file:
+      - .env
+    build:
+      context: src/backend/notifications
+      dockerfile: DockerfileCelery
+    depends_on:
+      - notifications-django-server
+      - celery-message-broker
+
+  notifications-db-postgres:
+    container_name: notifications-db-postgres
     image: postgres
     user: postgres
     restart: "on-failure"
@@ -86,8 +106,29 @@ services:
       timeout: 5s
       retries: 5
 
+  conversations-nginx-server:
+        container_name: conversations-nginx-server
+        env_file:
+        - .env
+        ports:
+          - 8082:8082
+        build:
+          src/backend/conversations
+        depends_on:
+          - conversations-django-server
 
-  db-postgres-conversations:
+  conversations-django-server:
+        container_name: conversations-django-server
+        env_file:
+        - .env
+        expose:
+          - 8080
+        build:
+          src/backend/conversations
+        depends_on:
+          - conversations-db-postgres
+
+  conversations-db-postgres:
     container_name: expertmeet-conversations-db
     image: postgres
     user: postgres
@@ -105,6 +146,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  celery-message-broker:
+    container_name: celery-message-broker
+    image: rabbitmq
+    expose:
+      - 5672
 
 volumes:
   db-data:

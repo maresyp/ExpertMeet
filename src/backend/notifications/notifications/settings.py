@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 dotenv.load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(os.getenv("DEBUG"))
+DEBUG = str(os.getenv("DEBUG")).lower() == "true"
 
 ALLOWED_HOSTS: list[str] = ["127.0.0.1", "localhost"]
 
@@ -45,8 +45,13 @@ INSTALLED_APPS = [
     "service",
 ]
 
+REST_FRAMEWORK = {"DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTStatelessUserAuthentication",)}
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    #
+    "corsheaders.middleware.CorsMiddleware",
+    #
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -87,9 +92,16 @@ if DEBUG:
         },
     }
 else:
-    msg: str = "TODO: PostgreSQL connection is not implemented yet"
-    raise NotImplementedError(msg)
-
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("POSTGRES_DB"),
+            "USER": os.getenv("POSTGRES_USER"),
+            "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+            "HOST": "notifications-db-postgres",
+            "PORT": "5432",
+        },
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -131,3 +143,9 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Celery Configuration Options
+CELERY_BROKER_URL = "celery-message-broker"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True

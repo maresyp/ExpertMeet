@@ -20,7 +20,7 @@ def test_review_summary_created(django_user_model):
         password="test",
     )
 
-    # Check that a profile has been created for the new user.
+    # Check that a review summary has been created for the new user.
     assert ReviewSummary.objects.filter(profile=user.profile).exists()
 
 
