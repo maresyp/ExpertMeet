@@ -1,7 +1,18 @@
 import pytest
 
+from chat.consumers.chat import ChatConsumer
+from conversations.asgi import application
+from channels.testing import WebsocketCommunicator
+from rest_framework import status
 
-def test_mock():
-    assert 1 == 1
+@pytest.mark.django_db
+@pytest.mark.asyncio
+async def test_missing_token():
+    communicator = WebsocketCommunicator(application, r"ws/socket-server/chat/")
 
-# https://github.com/django/channels/blob/main/tests/test_generic_websocket.py
+    connected, response = await communicator.connect()
+
+    assert not connected
+    assert response == status.HTTP_400_BAD_REQUEST
+
+    await communicator.disconnect()
