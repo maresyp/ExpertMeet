@@ -1,4 +1,17 @@
-from django.db import models  # noqa: F401
+import uuid
 
+from django.contrib.auth.models import User
+from django.db import models
 
 # Create your models here.
+
+class Message(models.Model):
+    message_id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
+    sender_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sender_id")
+    recipient_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="recipient_id")
+    body = models.TextField(max_length=5000)
+    send_timestamp = models.DateTimeField(auto_now_add=True)
+    view_timestamp = models.DateTimeField(null=True, blank=True, default=None)
+
+    def __str__(self) -> str:
+        return str(f"{self.message_id} {self.send_timestamp}: {self.sender_id}: {self.body}")
