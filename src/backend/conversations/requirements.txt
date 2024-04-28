@@ -12,3 +12,4 @@ django-filter  # Filtering support
 djangorestframework-simplejwt
 psycopg2-binary
 django-cors-headers
+channels
