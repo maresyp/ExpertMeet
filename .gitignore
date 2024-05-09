@@ -162,3 +162,5 @@ cython_debug/
 !/src/frontend/expertmeet/.gitignore
 .DS_Store
 src/backend/tests/reports
+
+.vscode

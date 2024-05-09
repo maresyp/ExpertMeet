@@ -11,6 +11,7 @@ import NavBar from './components/navbar/NavBar';
 import React from 'react';
 import MyProfile from './pages/MyProfile';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Chat from './pages/Chat';
 
 // Create a client for web requests
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ function App() {
                   <Route element={<PrivateRoutes />}>
                     {/* Private routes */}
                     <Route element={<MyProfile />} path='/profile' />
+                    <Route element={<Chat />} path='/chat' />
                   </Route>
                   {/* Fallback route */}
                   <Route path="*" element={<HomePage />} />

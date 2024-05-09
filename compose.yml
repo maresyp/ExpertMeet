@@ -1,4 +1,3 @@
-version: "3.9"
 name: expertmeet
 
 services:
@@ -12,6 +11,11 @@ services:
       - expertmeet-nginx-server
       - notifications-nginx-server
       - conversations-nginx-server
+    develop:
+      watch:
+        - action: rebuild
+          path: ./src/frontend/web
+
 
   expertmeet-nginx-server:
     env_file:
