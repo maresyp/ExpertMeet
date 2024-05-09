@@ -69,8 +69,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return {
                 str(msg.message_id): {
                     "message": msg.body,
-                    "sender": msg.sender_id.id,
-                    "recipient": msg.recipient_id.id,
+                    "sender": msg.sender_id,
+                    "recipient": msg.recipient_id,
                     "timestamp": msg.send_timestamp.strftime("%Y-%m-%d %H:%M:%S"),
                 }
                 for msg in messages
@@ -90,14 +90,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if not message:
             return
 
-        recipient = await self.get_user(data["recipient"])
-        user = await self.get_user(self.scope["user"].id)
+        recipient = int(data["recipient"])
+        user = int(self.scope["user_id"])
 
-        message_id = await self.save_message(user, recipient.id, message)
+        message_id = await self.save_message(user, recipient, message)
 
         # Update the recipient with the new message
         await self.channel_layer.group_send(
-            f"chat_{recipient.id}",
+            f"chat_{recipient}",
             {
                 "type": "chat_message",
                 "message": message,
@@ -127,7 +127,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def chat_message_read_handler(self, data):
         messages = Message.objects.filter(
-            (Q(sender_id=data["recipient"], recipient_id=self.scope["user"]) | Q(sender_id=self.scope["user"], recipient_id=data["recipient"]))
+            (Q(sender_id=data["recipient"], recipient_id=self.scope["user_id"]) | Q(sender_id=self.scope["user_id"], recipient_id=data["recipient"]))
             & Q(view_timestamp__isnull=True),
         )
 
@@ -143,14 +143,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             end_index = start_index + self.PAGE_SIZE
 
             messages = Message.objects.filter(
-                Q(sender_id=self.scope["user"], recipient_id=recipient_id) | Q(sender_id=recipient_id, recipient_id=self.scope["user"]),
+                Q(sender_id=self.scope["user_id"], recipient_id=recipient_id) | Q(sender_id=recipient_id, recipient_id=self.scope["user_id"]),
             ).order_by("-send_timestamp")[start_index:end_index]
 
             return {
                 str(msg.message_id): {
                     "message": msg.body,
-                    "sender": msg.sender_id.id,
-                    "recipient": msg.recipient_id.id,
+                    "sender": msg.sender_id,
+                    "recipient": msg.recipient_id,
                     "timestamp": msg.send_timestamp.strftime("%Y-%m-%d %H:%M:%S"),
                 }
                 for msg in messages
@@ -167,5 +167,5 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def save_message(self, sender, recipient, message):
-        message_obj = Message.objects.create(sender_id=sender, recipient_id=User.objects.get(id=recipient), body=message)
+        message_obj = Message.objects.create(sender_id=sender, recipient_id=recipient, body=message)
         return message_obj.message_id

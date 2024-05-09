@@ -1,14 +1,13 @@
 import uuid
 
-from django.contrib.auth.models import User
 from django.db import models
 
 # Create your models here.
 
 class Message(models.Model):
     message_id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
-    sender_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sender_id")
-    recipient_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="recipient_id")
+    sender_id = models.IntegerField(editable=False, null=False, blank=False)
+    recipient_id = models.IntegerField(editable=False, null=False, blank=False)
     body = models.TextField(max_length=5000)
     send_timestamp = models.DateTimeField(auto_now_add=True)
     view_timestamp = models.DateTimeField(null=True, blank=True, default=None)

@@ -63,9 +63,30 @@ async def test_chat(user):
     connected, _ = await communicator.connect()
     assert connected
 
-    await communicator.send_input({
+    # Test all possible routes
+
+    await communicator.send_json_to({
         "type": "chat-message",
-        "body": b"chunk one \x01 chunk two",
+        "message": "chunk one \x01 chunk two",
+        "recipient": 10,
+    })
+
+    await communicator.send_json_to({
+        "type": "recipient-change",
+        "message": "chunk one \x01 chunk two",
+        "recipient": 10,
+    })
+
+    await communicator.send_json_to({
+        "type": "chat_message_read",
+        "message": "chunk one \x01 chunk two",
+        "recipient": 10,
+    })
+
+    await communicator.send_json_to({
+        "type": "chat-request-more-messages",
+        "message": "chunk one \x01 chunk two",
+        "recipient": 10,
     })
 
     await communicator.disconnect()
