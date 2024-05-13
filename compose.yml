@@ -6,16 +6,20 @@ services:
     build:
       src/frontend/web
     ports:
-      - 80:80
+      - 3000:3000
     depends_on:
       - expertmeet-nginx-server
       - notifications-nginx-server
       - conversations-nginx-server
     develop:
       watch:
-        - action: rebuild
+        - action: sync
           path: ./src/frontend/web
-
+          target: /app
+          ignore:
+          - node_modules/
+        - action: rebuild
+          path: package.json
 
   expertmeet-nginx-server:
     env_file:
@@ -131,6 +135,22 @@ services:
           src/backend/conversations
         depends_on:
           - conversations-db-postgres
+        develop:
+          watch:
+            - action: sync+restart
+              path: src/backend/conversations
+              target: /usr/src/app
+
+  conversations-celery-server:
+    container_name: conversations-celery-server
+    env_file:
+      - .env
+    build:
+      context: src/backend/conversations
+      dockerfile: DockerfileCelery
+    depends_on:
+      - conversations-django-server
+      - celery-message-broker
 
   conversations-db-postgres:
     container_name: expertmeet-conversations-db
