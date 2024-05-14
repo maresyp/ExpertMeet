@@ -14,3 +14,18 @@ class Message(models.Model):
 
     def __str__(self) -> str:
         return str(f"{self.message_id} {self.send_timestamp}: {self.sender_id}: {self.body}")
+
+    def save(self, *args, **kwargs):
+        Conversation.objects.get_or_create(person1=min(self.sender_id, self.recipient_id), person2=max(self.sender_id, self.recipient_id))
+        super().save(*args, **kwargs)
+
+
+class Conversation(models.Model):
+    person1 = models.IntegerField()
+    person2 = models.IntegerField()
+
+    class Meta:
+        unique_together = ("person1", "person2")
+
+    def __str__(self):
+        return f"Conversation between {self.person1} and {self.person2}"
