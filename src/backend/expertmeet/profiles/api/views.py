@@ -41,6 +41,12 @@ def get_profile_picture(_request, profile_id: UUID) -> FileResponse:
     profile = get_object_or_404(Profile, id=profile_id)
     return FileResponse(Path(profile.profile_image.path).open("rb"), content_type="image/jpg")  # noqa: SIM115 file is closed automatically
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_profile_uuid(_request, user_id: int):
+    profile = get_object_or_404(Profile, user__id=user_id)
+    return Response({"profile_uuid": profile.id})
+
 
 @api_view(["GET"])
 def get_profile_feed(_request) -> Response:
