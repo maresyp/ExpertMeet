@@ -35,6 +35,7 @@ function App() {
                   <Route element={<PrivateRoutes />}>
                     {/* Private routes */}
                     <Route element={<MyProfile />} path='/profile' />
+                    <Route element={<Chat />} path='/chat/:newChatUserId' />
                     <Route element={<Chat />} path='/chat' />
                   </Route>
                   {/* Fallback route */}
