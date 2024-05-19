@@ -20,6 +20,8 @@
 
 # CMD ["nginx", "-g", "daemon off;"]
 
+# TODO: remove development mode, it breaks token auto refresh
+
 FROM node
 
 # Install dependencies

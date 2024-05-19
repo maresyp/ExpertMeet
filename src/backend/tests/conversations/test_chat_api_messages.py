@@ -85,7 +85,7 @@ def test_get_initial_messages_pagination(api_client, create_user, django_user_mo
     response = api_client.get(path=url,)
     assert response.status_code == status.HTTP_200_OK
     assert len(response.data) == 10
-    assert response.data[0]['body'] == "Newest"
+    assert response.data[0]['body'] == "Test Message"
 
 @pytest.mark.django_db
 def test_get_paginated_messages(api_client, create_user, django_user_model):

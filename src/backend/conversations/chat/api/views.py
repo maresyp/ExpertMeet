@@ -8,7 +8,8 @@ if TYPE_CHECKING:
     from uuid import UUID
 
 from chat.models import Message
-from django.db.models import Q
+from django.db.models import DateTimeField, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -44,13 +45,23 @@ def get_conversations(request):
     user_id = request.user.id
 
     # TODO(<maresyp>): implement pagination for more friends
-    conversations = Conversation.objects.filter(Q(person1=user_id) | Q(person2=user_id))
-    for conv in conversations:
-        conv.last_message_time = Message.objects.filter(
-            Q(sender_id=conv.person1, recipient_id=conv.person2) | Q(sender_id=conv.person2, recipient_id=conv.person1),
-        ).order_by("-send_timestamp")[:1]
+    # Subquery to get the timestamp of the latest message for each conversation
+    latest_message_subquery = (
+        Message.objects.filter(
+            Q(sender_id=OuterRef("person1"), recipient_id=OuterRef("person2")) | Q(sender_id=OuterRef("person2"), recipient_id=OuterRef("person1")),
+        )
+        .order_by("-send_timestamp")
+        .values("send_timestamp")[:1]
+    )
 
-    conversations.order_by("-last_message_time")
+    # Annotate conversations with the latest message timestamp
+    conversations = Conversation.objects.filter(Q(person1=user_id) | Q(person2=user_id)).annotate(
+        last_message_time=Subquery(latest_message_subquery, output_field=DateTimeField()),
+    )
+
+    # Order conversations by the latest message timestamp
+    conversations = conversations.order_by(Coalesce("last_message_time", "id").desc())
+
     serializer = ConversationSerializer(conversations, many=True)
 
     return Response(serializer.data, status=status.HTTP_200_OK)

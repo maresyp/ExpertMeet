@@ -1,7 +1,7 @@
 from typing import ClassVar
 
 from chat.models import Conversation, Message
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import DateTimeField, ModelSerializer
 
 
 class MessageSerializer(ModelSerializer):
@@ -10,6 +10,8 @@ class MessageSerializer(ModelSerializer):
         fields: ClassVar = "__all__"
 
 class ConversationSerializer(ModelSerializer):
+    last_message_time = DateTimeField(read_only=True)
+
     class Meta:
         model = Conversation
-        field: ClassVar = "__all__"
+        fields: ClassVar = ["id", "person1", "person2", "last_message_time"]

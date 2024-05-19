@@ -21,6 +21,7 @@ class Message(models.Model):
 
 
 class Conversation(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     person1 = models.IntegerField()
     person2 = models.IntegerField()
 
