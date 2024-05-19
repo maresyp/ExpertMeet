@@ -11,7 +11,6 @@ import ListItemText from '@mui/material/ListItemText';
 import Avatar from '@mui/material/Avatar';
 import Fab from '@mui/material/Fab';
 import SendIcon from '@mui/icons-material/Send';
-import { styled } from '@mui/material';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -19,24 +18,8 @@ import AuthContext from '../context/AuthContext';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-const useStyles = styled({
-    chatSection: {
-        width: '100%',
-        height: '80vh'
-    },
-
-    borderRight500: {
-        borderRight: '1px solid #e0e0e0'
-    },
-    messageArea: {
-        height: '70vh',
-        overflowY: 'auto'
-    }
-});
-
 function ChatWindow({ recipientID }) {
     const { user, authTokens } = React.useContext(AuthContext)
-    const classes = useStyles();
     const [userMessage, setUserMessage] = useState('');
     const [messages, setMessages] = useState([]);
     const url = `ws://127.0.0.1:8082/ws/socket-server/chat/?token=${authTokens.access}`
@@ -134,7 +117,10 @@ function ChatWindow({ recipientID }) {
                 height: '600px',
                 overflow: 'auto',
             }}>
-                <List className={classes.messageArea}>
+                <List sx={{
+                    height: '70vh',
+                    overflowY: 'auto'
+                }}>
                     {messages.map((message, index) => (
                         <ListItem key={index}>
                             <Box sx={{
@@ -157,7 +143,7 @@ function ChatWindow({ recipientID }) {
                                         </Box>
                                     </Grid>
                                     <Grid item xs={12}>
-                                        <ListItemText align={message.sender_id === user.user_id ? 'right' : 'left'} secondary={message.send_timestamp} />
+                                        <ListItemText align={message.sender_id === user.user_id ? 'right' : 'left'} secondary={new Date(message.send_timestamp).toLocaleString()} />
                                     </Grid>
                                 </Grid>
                             </Box>
@@ -187,24 +173,55 @@ function ChatWindow({ recipientID }) {
 }
 
 const Chat = () => {
-    const classes = useStyles();
-
     // Used for creation of new chat when accessing /chat/<id>
     const { newChatUserId } = useParams(null);
-    const { user } = React.useContext(AuthContext)
-    const [conversations, setConversations] = useState([
-        { personID: 1, },
-        // initial conv here
-    ]);
+    const { user, authTokens } = React.useContext(AuthContext)
+    const [conversations, setConversations] = useState([]);
+
+    useQueryClient()
+    const { isLoading, data, error } = useQuery({
+        queryKey: ['ChatFriends'],
+        queryFn: ({ signal }) =>
+            fetch(`http://127.0.0.1:8082/api/chat/conversations/`, {
+                signal,
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authTokens?.access}`
+                },
+            }).then((res) => {
+                if (!res.ok) {
+                    throw new Error('Failed to fetch')
+                }
+                return res.json()
+            }),
+    })
+
+    if (error) {
+        console.log(error);
+    }
+
+    useEffect(() => {
+        if (data) {
+            console.log(data)
+            setConversations(prevConversations => {
+                const newMessages = data.filter(
+                    newData => !prevConversations.some(cv => cv.id === newData.id)
+                );
+                return [...prevConversations, ...newMessages];
+            });
+        }
+    }, [data]); // Only re-run the effect if `data` changes
+
 
     const [currentRecipient, setCurrentRecipient] = useState(2);
     useEffect(() => {
         console.log(`effect recipient set: ${currentRecipient}`);
     }, [currentRecipient])
 
-    const handleFriendClick = () => {
-        setCurrentRecipient(2)
-        console.log("new user clicked");
+    const handleFriendClick = (userID) => {
+        setCurrentRecipient(userID)
+        console.log("new user clicked", userID);
     }
 
     console.log(newChatUserId);
@@ -230,19 +247,33 @@ const Chat = () => {
                         <Typography variant="h5" className="header-message">Czat</Typography>
                     </Grid>
                 </Grid>
-                <Grid container component={Paper} className={classes.chatSection}>
-                    <Grid item xs={3} className={classes.borderRight500}>
+                <Grid container component={Paper} sx={{
+                    width: '100%',
+                    height: '80vh'
+                }}>
+                    <Grid item xs={3} sx={{
+                        borderRight: '1px solid #e0e0e0'
+                    }}>
                         <Grid item xs={12} style={{ padding: '10px' }}>
                             <TextField id="outlined-basic-email" label="Wyszukaj" variant="outlined" fullWidth />
                         </Grid>
                         <Divider />
                         <List>
+                            {conversations.map((conversation) => (
+                                <ListItem onClick={() => handleFriendClick(conversation.person1 === user.id ? conversation.person1 : conversation.person2)} button>
+                                    <ListItemIcon>
+                                        <Avatar alt="P" src={`http://127.0.0.1:8080/api/profile/get_avatar/${conversation.person1 === user.id ? conversation.person1 : conversation.person2}`} />
+                                    </ListItemIcon>
+                                    <ListItemText primary="Remy Sharp">Remy Sharp</ListItemText>
+                                    <ListItemText secondary={new Date(conversation.last_message_time).toLocaleTimeString()} align="right"></ListItemText>
+                                </ListItem>
+                            ))}
                             <ListItem onClick={handleFriendClick} button key="RemySharp">
                                 <ListItemIcon>
                                     <Avatar alt="Remy Sharp" src="https://material-ui.com/static/images/avatar/1.jpg" />
                                 </ListItemIcon>
                                 <ListItemText primary="Remy Sharp">Remy Sharp</ListItemText>
-                                <ListItemText secondary="online" align="right"></ListItemText>
+                                <ListItemText secondary="timestamp" align="right"></ListItemText>
                             </ListItem>
                         </List>
                     </Grid>
