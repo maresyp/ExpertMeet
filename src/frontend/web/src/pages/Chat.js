@@ -49,6 +49,7 @@ function useSocket() {
 
     return socketRef;
 }
+
 function ChatWindow({ recipientID }) {
     const { user, authTokens } = React.useContext(AuthContext)
     const [userMessage, setUserMessage] = useState('');
@@ -118,15 +119,9 @@ function ChatWindow({ recipientID }) {
     }
 
     return (
-        <Grid item xs={9}>
-            <Box sx={{
-                height: '600px',
-                overflow: 'auto',
-            }}>
-                <List sx={{
-                    height: '70vh',
-                    overflowY: 'auto'
-                }}>
+        <Grid item xs={9} sx={{ display: 'flex', flexDirection: 'column', height: '700px' }}>
+            <Box sx={{ overflow: 'auto', flex: 1 }}>
+                <List sx={{ flex: 1, overflowY: 'auto' }}>
                     {messages.map((message, index) => (
                         <ListItem key={index}>
                             <Box sx={{
@@ -143,6 +138,8 @@ function ChatWindow({ recipientID }) {
                                                 borderRadius: '15px',
                                                 backgroundColor: message.sender_id === user.user_id ? '#0b81ff' : '#f0f0f0',
                                                 color: message.sender_id === user.user_id ? '#ffffff' : '#000000',
+                                                overflowX: "hidden",
+                                                wordWrap: 'break-word',
                                             }}
                                         >
                                             <ListItemText align={message.sender_id === user.user_id ? 'right' : 'left'} primary={message.body} />
@@ -160,7 +157,6 @@ function ChatWindow({ recipientID }) {
             </Box>
             <Divider />
             <Grid container style={{ padding: '20px' }}>
-
                 <Grid item xs={11}>
                     <TextField multiline maxRows={4} value={userMessage} onChange={updateMessageHandler} onKeyPress={(event) => {
                         if (event.key === 'Enter') {
@@ -243,14 +239,14 @@ const Chat = () => {
     }
 
     return (
-        <Container component="main" maxWidth="lg">
+        <Container component="main" maxWidth="lg" sx={{ height: '75%' }}>
             <CssBaseline />
             <Box
                 sx={{
                     marginTop: 16,
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'left',
+                    width: '100%',
                 }}
             >
                 <Grid container>
@@ -260,7 +256,7 @@ const Chat = () => {
                 </Grid>
                 <Grid container component={Paper} sx={{
                     width: '100%',
-                    height: '80vh'
+                    display: 'flex',
                 }}>
                     <Grid item xs={3} sx={{
                         borderRight: '1px solid #e0e0e0'
