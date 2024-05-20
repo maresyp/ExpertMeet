@@ -11,6 +11,7 @@ urlpatterns = [
     path("profile/visit/<uuid:profile_id>/", views.visit_profile, name="profile_visit"),
     #
     path("profile/get_avatar/<uuid:profile_id>", views.get_profile_picture, name="profile_picture"),
+    path("profile/get_avatar_by_user/<int:user_id>", views.get_profile_picture_by_user, name="profile_picture_by_user"),
     path("profile/get_profile_uuid/<int:user_id>", views.get_profile_uuid, name="get_profile_uuid"),
     path("profile/get_review_summary/<uuid:profile_id>", views.get_review_summary, name="get_review_summary"),
     #
