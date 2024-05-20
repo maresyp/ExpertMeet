@@ -18,10 +18,8 @@ import AuthContext from '../context/AuthContext';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-function ChatWindow({ recipientID }) {
-    const { user, authTokens } = React.useContext(AuthContext)
-    const [userMessage, setUserMessage] = useState('');
-    const [messages, setMessages] = useState([]);
+function useSocket() {
+    const { authTokens } = React.useContext(AuthContext)
     const url = `ws://127.0.0.1:8082/ws/socket-server/chat/?token=${authTokens.access}`
     const socketRef = useRef();
 
@@ -44,11 +42,18 @@ function ChatWindow({ recipientID }) {
             console.error('WebSocket error: ', event);
         };
 
-        // Cleanup function
         return () => {
             socketRef.current.close();
         };
     }, [url]);
+
+    return socketRef;
+}
+function ChatWindow({ recipientID }) {
+    const { user, authTokens } = React.useContext(AuthContext)
+    const [userMessage, setUserMessage] = useState('');
+    const [messages, setMessages] = useState([]);
+    const socketRef = useSocket();
 
     useQueryClient()
     const { isLoading, data, error } = useQuery({
@@ -67,6 +72,7 @@ function ChatWindow({ recipientID }) {
                 }
                 return res.json()
             }),
+        enabled: !!recipientID,
     })
 
     if (error) {
@@ -100,7 +106,7 @@ function ChatWindow({ recipientID }) {
             return
         }
 
-        setMessages([...messages, { sender_id: user.user_id, body: userMessage, send_timestamp: new Date().toLocaleTimeString() }]);
+        setMessages([...messages, { sender_id: user.user_id, body: userMessage, send_timestamp: new Date() }]);
 
         socketRef.current.send(JSON.stringify({
             'type': 'chat-message',
@@ -177,6 +183,7 @@ const Chat = () => {
     const { newChatUserId } = useParams(null);
     const { user, authTokens } = React.useContext(AuthContext)
     const [conversations, setConversations] = useState([]);
+    const socketRef = useSocket();
 
     useQueryClient()
     const { isLoading, data, error } = useQuery({
@@ -221,6 +228,10 @@ const Chat = () => {
 
     const handleFriendClick = (userID) => {
         setCurrentRecipient(userID)
+        socketRef.current.send(JSON.stringify({
+            'type': 'chat_message_read',
+            'recipient': userID
+        }))
         console.log("new user clicked", userID);
     }
 
@@ -259,22 +270,15 @@ const Chat = () => {
                         </Grid>
                         <Divider />
                         <List>
-                            {conversations.map((conversation) => (
-                                <ListItem onClick={() => handleFriendClick(conversation.person1 === user.id ? conversation.person1 : conversation.person2)} button>
+                            {conversations.map((conversation, index) => (
+                                <ListItem onClick={() => handleFriendClick(conversation.person1 === user.id ? conversation.person1 : conversation.person2)} button key={index}>
                                     <ListItemIcon>
-                                        <Avatar alt="P" src={`http://127.0.0.1:8080/api/profile/get_avatar/${conversation.person1 === user.id ? conversation.person1 : conversation.person2}`} />
+                                        <Avatar alt="P" src={`http://127.0.0.1:8080/api/profile/get_avatar_by_user/${conversation.person1 === user.id ? conversation.person1 : conversation.person2}`} />
                                     </ListItemIcon>
                                     <ListItemText primary="Remy Sharp">Remy Sharp</ListItemText>
                                     <ListItemText secondary={new Date(conversation.last_message_time).toLocaleTimeString()} align="right"></ListItemText>
                                 </ListItem>
                             ))}
-                            <ListItem onClick={handleFriendClick} button key="RemySharp">
-                                <ListItemIcon>
-                                    <Avatar alt="Remy Sharp" src="https://material-ui.com/static/images/avatar/1.jpg" />
-                                </ListItemIcon>
-                                <ListItemText primary="Remy Sharp">Remy Sharp</ListItemText>
-                                <ListItemText secondary="timestamp" align="right"></ListItemText>
-                            </ListItem>
                         </List>
                     </Grid>
                     <ChatWindow recipientID={currentRecipient} />
