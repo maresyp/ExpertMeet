@@ -1,4 +1,7 @@
-from rest_framework.serializers import CharField, EmailField, Serializer
+from typing import ClassVar
+
+from django.contrib.auth.models import User
+from rest_framework.serializers import CharField, EmailField, ModelSerializer, Serializer
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -23,3 +26,8 @@ class NewUserSerializer(Serializer):
     password = CharField(max_length=64)
     first_name = CharField(max_length=32)
     last_name = CharField(max_length=32)
+
+class UserSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields: ClassVar = ["id", "username", "first_name", "last_name"]

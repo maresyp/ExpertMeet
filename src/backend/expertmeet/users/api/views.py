@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from .serializers import NewUserSerializer
+from .serializers import NewUserSerializer, UserSerializer
 
 
 @api_view(["GET"])
@@ -37,3 +38,10 @@ def register_user(request) -> Response:
     )
 
     return Response(status=status.HTTP_201_CREATED)
+
+@api_view(["GET"])
+def get_basic_info(_request, user_id: int) -> Response:
+    user = get_object_or_404(User, pk=user_id)
+    serializer = UserSerializer(user)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
