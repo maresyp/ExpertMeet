@@ -239,7 +239,7 @@ const Chat = () => {
     }
 
     return (
-        <Container component="main" maxWidth="lg" sx={{ height: '75%' }}>
+        <Container component="main" maxWidth="lg" sx={{ height: '700px' }}>
             <CssBaseline />
             <Box
                 sx={{
@@ -256,16 +256,19 @@ const Chat = () => {
                 </Grid>
                 <Grid container component={Paper} sx={{
                     width: '100%',
+                    height: "700px",
                     display: 'flex',
                 }}>
                     <Grid item xs={3} sx={{
-                        borderRight: '1px solid #e0e0e0'
+                        borderRight: '1px solid #e0e0e0',
+                        flexDirection: 'column',
                     }}>
                         <Grid item xs={12} style={{ padding: '10px' }}>
                             <TextField id="outlined-basic-email" label="Wyszukaj" variant="outlined" fullWidth />
+
                         </Grid>
-                        <Divider />
-                        <List>
+
+                        <List sx={{ flexGrow: 1, maxHeight: "625px", overflowY: 'auto' }}>
                             {conversations.map((conversation, index) => (
                                 <ListItem onClick={() => handleFriendClick(conversation.person1 === user.id ? conversation.person1 : conversation.person2)} button key={index}>
                                     <ListItemIcon>
