@@ -3,6 +3,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 from chat.models import Message
+from urllib.parse import urlencode
 
 @pytest.fixture
 def api_client():
@@ -85,7 +86,8 @@ def test_get_initial_messages_pagination(api_client, create_user, django_user_mo
     response = api_client.get(path=url,)
     assert response.status_code == status.HTTP_200_OK
     assert len(response.data) == 10
-    assert response.data[0]['body'] == "Test Message"
+    assert response.data[-1]['body'] == "Test Message"
+    assert response.data[0]['body'] == "Newest"
 
 @pytest.mark.django_db
 def test_get_paginated_messages(api_client, create_user, django_user_model):
@@ -112,12 +114,20 @@ def test_get_paginated_messages(api_client, create_user, django_user_model):
             body="New Message"
         )
 
-    url = reverse("get_messages", kwargs={"recipient_id": user2.id, "message_id": msg.message_id})
+    url = reverse("get_messages", kwargs={"recipient_id": user2.id})
     api_client.force_authenticate(user=user)
 
-    response = api_client.get(path=url,)
+    response = api_client.get(path=url)
 
     assert response.status_code == status.HTTP_200_OK
     assert len(response.data) == 10
     for message in response.data:
-        assert message['body'] == "Test Message"
+        assert message['body'] == "New Message"
+
+    params: dict = {"page": 2}
+    response = api_client.get(path=f"{url}?{urlencode(params)}")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(response.data) == 10
+    assert response.data[0]['body'] == "Test"
+    assert response.data[-1]['body'] == "Test Message"
