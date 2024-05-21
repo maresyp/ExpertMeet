@@ -176,29 +176,47 @@ function ChatWindow({ recipientID }) {
 
 const Chat = () => {
     // Used for creation of new chat when accessing /chat/<id>
+    useQueryClient()
     const { newChatUserId } = useParams(null);
     const { user, authTokens } = React.useContext(AuthContext)
     const [conversations, setConversations] = useState([]);
     const socketRef = useSocket();
 
-    useQueryClient()
+    const fetchConversations = async ({ signal }) => {
+        const res = await fetch(`http://127.0.0.1:8082/api/chat/conversations/`, {
+            signal,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authTokens?.access}`
+            },
+        });
+        if (!res.ok) {
+            throw new Error('Failed to fetch');
+        }
+        return res.json();
+    };
+
+    const fetchUserData = async (userID) => {
+        const res = await fetch(`http://127.0.0.1:8080/api/user/get_basic_info/${userID}`, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!res.ok) {
+            throw new Error('Failed to fetch user data');
+        }
+        return res.json();
+    };
+
     const { isLoading, data, error } = useQuery({
         queryKey: ['ChatFriends'],
-        queryFn: ({ signal }) =>
-            fetch(`http://127.0.0.1:8082/api/chat/conversations/`, {
-                signal,
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authTokens?.access}`
-                },
-            }).then((res) => {
-                if (!res.ok) {
-                    throw new Error('Failed to fetch')
-                }
-                return res.json()
-            }),
+        queryFn: fetchConversations
     })
+
+    if (isLoading) {
+
+    }
 
     if (error) {
         console.log(error);
@@ -206,18 +224,34 @@ const Chat = () => {
 
     useEffect(() => {
         if (data) {
-            console.log(data)
-            setConversations(prevConversations => {
-                const newMessages = data.filter(
-                    newData => !prevConversations.some(cv => cv.id === newData.id)
-                );
-                return [...prevConversations, ...newMessages];
-            });
+            const loadUsers = async () => {
+                const updatedConversations = await Promise.all(data.map(async (conversation) => {
+                    const otherPersonId = conversation.person1 === user.user_id ? conversation.person2 : conversation.person1;
+                    try {
+                        const profileData = await fetchUserData(otherPersonId);
+                        return {
+                            ...conversation,
+                            profile: profileData
+                        };
+                    } catch (err) {
+                        console.error(`Failed to fetch user data for user ${otherPersonId}:`, err);
+                        return {
+                            ...conversation,
+                            // Return conversation with default profile data if there's an error
+                            profile: { id: -1, username: null, first_name: "Load", last_name: "Failed" }
+                        }
+                    }
+                }));
+
+                setConversations(updatedConversations);
+            };
+
+            loadUsers();
         }
-    }, [data]); // Only re-run the effect if `data` changes
+    }, [data, user.user_id]); // Only re-run the effect if `data` or user.user_id changes
 
 
-    const [currentRecipient, setCurrentRecipient] = useState(2);
+    const [currentRecipient, setCurrentRecipient] = useState(3);
     useEffect(() => {
         console.log(`effect recipient set: ${currentRecipient}`);
     }, [currentRecipient])
@@ -231,8 +265,8 @@ const Chat = () => {
         console.log("new user clicked", userID);
     }
 
-    console.log(newChatUserId);
     if (newChatUserId) {
+        console.log(newChatUserId);
         setCurrentRecipient(newChatUserId)
         // TODO : handle new chat window
 
@@ -269,15 +303,19 @@ const Chat = () => {
                         </Grid>
 
                         <List sx={{ flexGrow: 1, maxHeight: "625px", overflowY: 'auto' }}>
-                            {conversations.map((conversation, index) => (
-                                <ListItem onClick={() => handleFriendClick(conversation.person1 === user.id ? conversation.person1 : conversation.person2)} button key={index}>
+                            {conversations.map((conversation, index) => {
+                                console.log(conversation)
+                                const profile = conversation.profile
+                                return (
+                                    <ListItem onClick={() => handleFriendClick(profile?.id)} button key={index}>
                                     <ListItemIcon>
-                                        <Avatar alt="P" src={`http://127.0.0.1:8080/api/profile/get_avatar_by_user/${conversation.person1 === user.id ? conversation.person1 : conversation.person2}`} />
+                                            <Avatar alt={profile?.first_name || 'P'} src={`http://127.0.0.1:8080/api/profile/get_avatar_by_user/${profile?.id}`} />
                                     </ListItemIcon>
-                                    <ListItemText primary="Remy Sharp">Remy Sharp</ListItemText>
+                                        <ListItemText primary={profile?.first_name + " " + profile?.last_name}></ListItemText>
                                     <ListItemText secondary={new Date(conversation.last_message_time).toLocaleTimeString()} align="right"></ListItemText>
                                 </ListItem>
-                            ))}
+                                )
+                            })}
                         </List>
                     </Grid>
                     <ChatWindow recipientID={currentRecipient} />
