@@ -42,6 +42,11 @@ services:
       src/backend/expertmeet
     depends_on:
       - expertmeet-db-postgres
+    develop:
+      watch:
+        - action: sync+restart
+          path: src/backend/expertmeet
+          target: /usr/src/app
 
   expertmeet-db-postgres:
     container_name: expertmeet-web-db
