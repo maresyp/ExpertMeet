@@ -54,13 +54,15 @@ function ChatWindow({ recipientID }) {
     const { user, authTokens } = React.useContext(AuthContext)
     const [userMessage, setUserMessage] = useState('');
     const [messages, setMessages] = useState([]);
+    const [page, setPage] = useState(1);
     const socketRef = useSocket();
+    const messagesEndRef = useRef(null);
 
     useQueryClient()
     const { isLoading, data, error } = useQuery({
         queryKey: ['ChatMessages'],
         queryFn: ({ signal }) =>
-            fetch(`http://127.0.0.1:8082/api/chat/messages/${recipientID}`, {
+            fetch(`http://127.0.0.1:8082/api/chat/messages/${recipientID}?page=${page}`, {
                 signal,
                 method: 'GET',
                 headers: {
@@ -86,14 +88,13 @@ function ChatWindow({ recipientID }) {
             setMessages(prevMessages => {
                 const newMessages = data.filter(
                     newData => !prevMessages.some(msg => msg.message_id === newData.message_id)
-                );
-                return [...prevMessages, ...newMessages];
+                ).reverse();
+                return [...prevMessages, ...newMessages]
             });
         }
     }, [data]); // Only re-run the effect if `data` changes
 
     // Scroll on new message
-    const messagesEndRef = useRef(null);
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
@@ -181,6 +182,7 @@ const Chat = () => {
     const { user, authTokens } = React.useContext(AuthContext)
     const [conversations, setConversations] = useState([]);
     const socketRef = useSocket();
+    const [currentRecipient, setCurrentRecipient] = useState(null);
 
     const fetchConversations = async ({ signal }) => {
         const res = await fetch(`http://127.0.0.1:8082/api/chat/conversations/`, {
@@ -224,6 +226,7 @@ const Chat = () => {
 
     useEffect(() => {
         if (data) {
+            console.log(data);
             const loadUsers = async () => {
                 const updatedConversations = await Promise.all(data.map(async (conversation) => {
                     const otherPersonId = conversation.person1 === user.user_id ? conversation.person2 : conversation.person1;
@@ -244,14 +247,18 @@ const Chat = () => {
                 }));
 
                 setConversations(updatedConversations);
+
+                // Set currentRecipient to the first conversation's profile ID if not already set
+                if (!currentRecipient && updatedConversations.length > 0) {
+                    setCurrentRecipient(updatedConversations[0].profile.id);
+                }
             };
 
             loadUsers();
         }
-    }, [data, user.user_id]); // Only re-run the effect if `data` or user.user_id changes
+    }, [data, user.user_id, currentRecipient]);
 
 
-    const [currentRecipient, setCurrentRecipient] = useState(3);
     useEffect(() => {
         console.log(`effect recipient set: ${currentRecipient}`);
     }, [currentRecipient])
@@ -304,7 +311,6 @@ const Chat = () => {
 
                         <List sx={{ flexGrow: 1, maxHeight: "625px", overflowY: 'auto' }}>
                             {conversations.map((conversation, index) => {
-                                console.log(conversation)
                                 const profile = conversation.profile
                                 return (
                                     <ListItem onClick={() => handleFriendClick(profile?.id)} button key={index}>
