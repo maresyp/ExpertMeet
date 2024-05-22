@@ -1,16 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from chat.models import Conversation
-
-if TYPE_CHECKING:
-    from uuid import UUID
-
-from chat.models import Message
+from chat.models import Conversation, Message
 from django.db.models import DateTimeField, OuterRef, Q, Subquery
-from django.db.models.functions import Coalesce
-from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -57,7 +48,7 @@ def get_conversations(request):
     )
 
     # Order conversations by the latest message timestamp
-    conversations = conversations.order_by(Coalesce("last_message_time", "id").desc())
+    conversations = conversations.order_by("last_message_time")
 
     # Set up pagination
     paginator = StandardResultsSetPagination()

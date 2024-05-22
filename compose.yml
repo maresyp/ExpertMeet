@@ -158,7 +158,7 @@ services:
       - celery-message-broker
 
   conversations-db-postgres:
-    container_name: expertmeet-conversations-db
+    container_name: conversations-db-postgres
     image: postgres
     user: postgres
     restart: "on-failure"
