@@ -13,7 +13,7 @@ class Message(models.Model):
     view_timestamp = models.DateTimeField(null=True, blank=True, default=None)
 
     def __str__(self) -> str:
-        return str(f"{self.message_id} {self.send_timestamp}: {self.sender_id}: {self.body}")
+        return str(f"{self.sender_id} -> {self.recipient_id} : {self.body}")
 
     def save(self, *args, **kwargs):
         Conversation.objects.get_or_create(person1=min(self.sender_id, self.recipient_id), person2=max(self.sender_id, self.recipient_id))

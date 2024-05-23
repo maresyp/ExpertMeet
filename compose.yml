@@ -121,12 +121,11 @@ services:
 
   conversations-nginx-server:
         container_name: conversations-nginx-server
-        env_file:
-        - .env
         ports:
           - 8082:8082
         build:
-          src/backend/conversations
+          context: ./src/backend/conversations/
+          dockerfile: DockerfileNginx
         depends_on:
           - conversations-django-server
 
@@ -135,7 +134,7 @@ services:
         env_file:
         - .env
         expose:
-          - 8080
+          - 8000
         build:
           src/backend/conversations
         depends_on:
