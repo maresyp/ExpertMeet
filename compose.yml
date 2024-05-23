@@ -22,11 +22,10 @@ services:
           path: package.json
 
   expertmeet-nginx-server:
-    env_file:
-      - .env
     container_name: expertmeet-nginx-server
     build:
-      src/backend/expertmeet/nginx
+      context: ./src/backend/expertmeet/
+      dockerfile: DockerfileNginx
     ports:
       - 8080:8080
     depends_on:
