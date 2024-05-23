@@ -29,8 +29,8 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = str(os.getenv("DEBUG")).lower() == "true"
 
-ALLOWED_HOSTS: list[str] = ["127.0.0.1", "localhost"]
-
+ALLOWED_HOSTS: list[str] = ["127.0.0.1", "localhost", "*"]
+CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8081"]
 
 # Application definition
 
@@ -149,3 +149,7 @@ CELERY_BROKER_URL = "celery-message-broker"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+STATIC_ROOT = BASE_DIR / "staticfiles"

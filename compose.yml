@@ -69,10 +69,9 @@ services:
 
   notifications-nginx-server:
       container_name: notifications-nginx-server
-      env_file:
-      - .env
       build:
-        src/backend/notifications
+        context: ./src/backend/notifications/
+        dockerfile: DockerfileNginx
       ports:
         - 8081:8081
       depends_on:
@@ -88,6 +87,11 @@ services:
         src/backend/notifications
       depends_on:
         - notifications-db-postgres
+      develop:
+        watch:
+          - action: sync+restart
+            path: src/backend/notifications
+            target: /usr/src/app
 
   notifications-celery-server:
     container_name: notifications-celery-server
