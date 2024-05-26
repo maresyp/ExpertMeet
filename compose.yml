@@ -6,7 +6,7 @@ services:
     build:
       src/frontend/web
     ports:
-      - 3000:3000
+      - 3000:3000 # TODO: change port for prod
     depends_on:
       - expertmeet-nginx-server
       - notifications-nginx-server
