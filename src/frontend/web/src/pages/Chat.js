@@ -107,6 +107,10 @@ function ChatWindow({ recipientID }) {
     useEffect(() => {
         if (data) {
             console.log(data);
+            const chatContainer = chatContainerRef.current;
+            const previousHeight = chatContainer.scrollHeight;
+            const previousScrollTop = chatContainer.scrollTop;
+
             setMessages((prevMessages) => {
                 const newMessages = data.filter(
                     (newData) => !prevMessages.some((msg) => msg.message_id === newData.message_id)
@@ -115,6 +119,10 @@ function ChatWindow({ recipientID }) {
 
                 // Sort messages by timestamp
                 allMessages.sort((a, b) => new Date(a.send_timestamp) - new Date(b.send_timestamp));
+
+                requestAnimationFrame(() => {
+                    chatContainer.scrollTop = chatContainer.scrollHeight - previousHeight + previousScrollTop;
+                });
 
                 return allMessages;
             });
