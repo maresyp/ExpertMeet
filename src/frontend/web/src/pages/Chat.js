@@ -51,10 +51,12 @@ function useSocket() {
 }
 
 function ChatWindow({ recipientID }) {
-    const { user, authTokens } = React.useContext(AuthContext)
+    const { user, authTokens } = React.useContext(AuthContext);
     const [userMessage, setUserMessage] = useState('');
     const [messages, setMessages] = useState([]);
     const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true); // State to track if there are more messages to fetch
+    const [isAtBottom, setIsAtBottom] = useState(true); // State to track if the user is at the bottom of the chat
     const socketRef = useSocket();
     const messagesEndRef = useRef(null);
     const chatContainerRef = useRef(null);
@@ -66,7 +68,9 @@ function ChatWindow({ recipientID }) {
     // }, [socketRef]);
 
     useQueryClient()
+
     const fetchMessages = async ({ queryKey }) => {
+        // eslint-disable-next-line no-unused-vars
         const [_key, recipientID, page] = queryKey;
         const response = await fetch(`http://127.0.0.1:8082/api/chat/messages/${recipientID}?page=${page}`, {
             method: 'GET',
@@ -77,16 +81,22 @@ function ChatWindow({ recipientID }) {
         });
 
         if (!response.ok) {
+            if (response.status === 404) {
+                setHasMore(false);
+                throw new Error('There are no more messages to download.');
+            }
             throw new Error('Failed to fetch');
         }
 
-        return response.json();
+        const data = await response.json();
+
+        return data;
     };
 
     const { isLoading, data, error } = useQuery({
         queryKey: ['ChatMessages', recipientID, page],
         queryFn: fetchMessages,
-        enabled: !!recipientID,
+        enabled: !!recipientID && hasMore, // Only fetch if there are more messages
         keepPreviousData: true,
     });
 
@@ -96,12 +106,12 @@ function ChatWindow({ recipientID }) {
 
     useEffect(() => {
         if (data) {
-            console.log(data)
-            setMessages(prevMessages => {
+            console.log(data);
+            setMessages((prevMessages) => {
                 const newMessages = data.filter(
-                    newData => !prevMessages.some(msg => msg.message_id === newData.message_id)
+                    (newData) => !prevMessages.some((msg) => msg.message_id === newData.message_id)
                 );
-                const allMessages = [...prevMessages, ...newMessages];
+                const allMessages = [...newMessages, ...prevMessages];
 
                 // Sort messages by timestamp
                 allMessages.sort((a, b) => new Date(a.send_timestamp) - new Date(b.send_timestamp));
@@ -111,14 +121,16 @@ function ChatWindow({ recipientID }) {
         }
     }, [data]);
 
-    // Scroll on new message
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (isAtBottom) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [messages]);
 
     const updateMessageHandler = (event) => {
         setUserMessage(event.target.value);
-    }
+    };
 
     const sendMessageHandler = () => {
         if (!userMessage) {
@@ -128,16 +140,20 @@ function ChatWindow({ recipientID }) {
         setMessages([...messages, { sender_id: user.user_id, body: userMessage, send_timestamp: new Date() }]);
 
         socketRef.current.send(JSON.stringify({
-            'type': 'chat-message',
-            'message': userMessage,
-            'recipient': recipientID
-        }))
+            type: 'chat-message',
+            message: userMessage,
+            recipient: recipientID,
+        }));
 
         setUserMessage('');
-    }
+    };
 
     const handleScroll = () => {
-        if (chatContainerRef.current.scrollTop === 0 && !isLoading) {
+        const chatContainer = chatContainerRef.current;
+        const isBottom = chatContainer.scrollHeight - chatContainer.scrollTop === chatContainer.clientHeight;
+        setIsAtBottom(isBottom);
+
+        if (chatContainer.scrollTop === 0 && !isLoading && hasMore) {
             setPage((prevPage) => prevPage + 1);
         }
     };
@@ -148,7 +164,8 @@ function ChatWindow({ recipientID }) {
         return () => {
             chatContainer.removeEventListener('scroll', handleScroll);
         };
-    }, [isLoading]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoading, hasMore]);
 
     return (
         <Grid item xs={9} sx={{ display: 'flex', flexDirection: 'column', height: '700px' }}>
@@ -193,7 +210,7 @@ function ChatWindow({ recipientID }) {
                     <TextField multiline maxRows={4} value={userMessage} onChange={updateMessageHandler} onKeyPress={(event) => {
                         if (event.key === 'Enter') {
                             sendMessageHandler();
-                            event.preventDefault(); // Prevents the addition of a new line in the TextField after pressing 'Enter'
+                            event.preventDefault();
                         }
                     }} label="Napisz wiadomość" fullWidth />
                 </Grid>
@@ -203,7 +220,7 @@ function ChatWindow({ recipientID }) {
                 </Grid>
             </Grid>
         </Grid>
-    )
+    );
 }
 
 const Chat = () => {
