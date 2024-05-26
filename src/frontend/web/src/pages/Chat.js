@@ -94,7 +94,7 @@ function ChatWindow({ recipientID }) {
     };
 
     const { isLoading, data, error } = useQuery({
-        queryKey: ['ChatMessages', recipientID, page],
+        queryKey: ['ChatMessages', recipientID, page, hasMore],
         queryFn: fetchMessages,
         enabled: !!recipientID && hasMore, // Only fetch if there are more messages
         keepPreviousData: true,
@@ -130,7 +130,7 @@ function ChatWindow({ recipientID }) {
     }, [data]);
 
     useEffect(() => {
-        if (isAtBottom) {
+        if (!isLoading) {
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -330,6 +330,7 @@ const Chat = () => {
 
     if (newChatUserId) {
         console.log(newChatUserId);
+        if (currentRecipient === newChatUserId) return;
         setCurrentRecipient(newChatUserId)
         // TODO : handle new chat window
 
