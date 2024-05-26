@@ -7,13 +7,14 @@ services:
       src/frontend/web
     ports:
       - 3000:3000 # TODO: change port for prod
+      - 80:80
     depends_on:
       - expertmeet-nginx-server
       - notifications-nginx-server
       - conversations-nginx-server
     develop:
       watch:
-        - action: sync
+        - action: rebuild
           path: ./src/frontend/web
           target: /app
           ignore:

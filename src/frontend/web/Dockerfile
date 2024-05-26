@@ -1,35 +1,35 @@
-# FROM node as build
+FROM node as build
 
-# WORKDIR /app
+WORKDIR /app
 
-# COPY package*.json ./
+COPY package*.json ./
 
-# RUN npm install
+RUN npm install
 
-# COPY . .
+COPY . .
 
-# RUN npm run build
+RUN npm run build
 
-# # Production stage
-# FROM nginx:stable-alpine as production
+# Production stage
+FROM nginx:stable-alpine as production
 
-# COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/build /usr/share/nginx/html
 
-# # Copy the nginx configuration
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy the nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# CMD ["nginx", "-g", "daemon off;"]
+CMD ["nginx", "-g", "daemon off;"]
 
 # TODO: remove development mode, it breaks token auto refresh
 
-FROM node
+# FROM node
 
-# Install dependencies
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
+# # Install dependencies
+# WORKDIR /app
+# COPY package*.json ./
+# RUN npm install
 
-# Copy source files into application directory
-COPY . /app
+# # Copy source files into application directory
+# COPY . /app
 
-CMD ["npm", "start"]
+# CMD ["npm", "start"]

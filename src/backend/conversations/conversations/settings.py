@@ -43,10 +43,10 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     #
+    "corsheaders",
     "channels",
     "rest_framework",
     "rest_framework_simplejwt",
-    "corsheaders",
     #
     "chat",
     "video",
@@ -60,8 +60,8 @@ MIDDLEWARE = [
     #
     "corsheaders.middleware.CorsMiddleware",
     #
-    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -167,5 +167,6 @@ CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ORIGIN_ALLOW_ALL = True
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
