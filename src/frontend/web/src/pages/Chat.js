@@ -57,26 +57,38 @@ function ChatWindow({ recipientID }) {
     const [page, setPage] = useState(1);
     const socketRef = useSocket();
     const messagesEndRef = useRef(null);
+    const chatContainerRef = useRef(null);
+
+    // useEffect(() => {
+    //     socketRef.current.onmessage = (event) => {
+    //         console.log(event);
+    //     }
+    // }, [socketRef]);
 
     useQueryClient()
+    const fetchMessages = async ({ queryKey }) => {
+        const [_key, recipientID, page] = queryKey;
+        const response = await fetch(`http://127.0.0.1:8082/api/chat/messages/${recipientID}?page=${page}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authTokens?.access}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch');
+        }
+
+        return response.json();
+    };
+
     const { isLoading, data, error } = useQuery({
-        queryKey: ['ChatMessages'],
-        queryFn: ({ signal }) =>
-            fetch(`http://127.0.0.1:8082/api/chat/messages/${recipientID}?page=${page}`, {
-                signal,
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authTokens?.access}`
-                },
-            }).then((res) => {
-                if (!res.ok) {
-                    throw new Error('Failed to fetch')
-                }
-                return res.json()
-            }),
+        queryKey: ['ChatMessages', recipientID, page],
+        queryFn: fetchMessages,
         enabled: !!recipientID,
-    })
+        keepPreviousData: true,
+    });
 
     if (error) {
         console.log(error);
@@ -88,11 +100,16 @@ function ChatWindow({ recipientID }) {
             setMessages(prevMessages => {
                 const newMessages = data.filter(
                     newData => !prevMessages.some(msg => msg.message_id === newData.message_id)
-                ).reverse();
-                return [...prevMessages, ...newMessages]
+                );
+                const allMessages = [...prevMessages, ...newMessages];
+
+                // Sort messages by timestamp
+                allMessages.sort((a, b) => new Date(a.send_timestamp) - new Date(b.send_timestamp));
+
+                return allMessages;
             });
         }
-    }, [data]); // Only re-run the effect if `data` changes
+    }, [data]);
 
     // Scroll on new message
     useEffect(() => {
@@ -119,9 +136,23 @@ function ChatWindow({ recipientID }) {
         setUserMessage('');
     }
 
+    const handleScroll = () => {
+        if (chatContainerRef.current.scrollTop === 0 && !isLoading) {
+            setPage((prevPage) => prevPage + 1);
+        }
+    };
+
+    useEffect(() => {
+        const chatContainer = chatContainerRef.current;
+        chatContainer.addEventListener('scroll', handleScroll);
+        return () => {
+            chatContainer.removeEventListener('scroll', handleScroll);
+        };
+    }, [isLoading]);
+
     return (
         <Grid item xs={9} sx={{ display: 'flex', flexDirection: 'column', height: '700px' }}>
-            <Box sx={{ overflow: 'auto', flex: 1 }}>
+            <Box ref={chatContainerRef} sx={{ overflow: 'auto', flex: 1 }}>
                 <List sx={{ flex: 1, overflowY: 'auto' }}>
                     {messages.map((message, index) => (
                         <ListItem key={index}>
