@@ -8,15 +8,12 @@ from django.utils import timezone
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
-    PAGE_SIZE = 10
-
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
         self.room_group_name = None
 
     async def connect(self):
         self.room_group_name = f"chat_{self.scope['user_id']}"
-
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name,
@@ -33,12 +30,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             match text_data_json["type"]:
                 case "chat-message":
                     await self.chat_message_handler(text_data_json)
-                case "recipient-change":
-                    await self.recipient_change_handler(text_data_json)
-                case "chat_message_read":
+                case "chat-message-read":
                     await self.chat_message_read_handler(text_data_json)
-                case "chat-request-more-messages":
-                    await self.chat_send_more_messages_handler(text_data_json)
         except KeyError:
             return
 
@@ -47,42 +40,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def chat_error_handler(self, error):
         await self.send(text_data=json.dumps({"type": "chat-error", "error": error}))
-
-    async def chat_send_more_messages_handler(self, data):
-        @database_sync_to_async
-        def get_more_messages():
-            last_message = Message.objects.filter(message_id=data["top_message_uuid"]).first()
-            if not last_message:
-                return {}
-
-            messages = (
-                Message.objects.filter(
-                    Q(sender_id=last_message.sender_id, recipient_id=last_message.recipient_id)
-                    | Q(sender_id=last_message.recipient_id, recipient_id=last_message.sender_id),
-                    send_timestamp__lt=last_message.send_timestamp,
-                )
-                .exclude(message_id=data["top_message_uuid"])
-                .order_by("-send_timestamp")[: self.PAGE_SIZE]
-            )
-
-            return {
-                str(msg.message_id): {
-                    "message": msg.body,
-                    "sender": msg.sender_id,
-                    "recipient": msg.recipient_id,
-                    "timestamp": msg.send_timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-                }
-                for msg in messages
-            }
-
-        await self.send(
-            text_data=json.dumps(
-                {
-                    "type": "chat-more-messages",
-                    "messages": await get_more_messages(),
-                },
-            ),
-        )
 
     async def chat_message_handler(self, data):
         message = data["message"]
@@ -113,15 +70,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "type": "chat-single-message",
                     "message": event["message"],
                     "message_id": str(event["message_id"]),
-                    "sender": event["sender"].id,
-                    "recipient": event["recipient"].id,
+                    "sender": event["sender"],
+                    "recipient": event["recipient"],
                     "timestamp": timezone.now().strftime("%Y-%m-%d %H:%M:%S"),
                 },
             ),
         )
-
-    async def recipient_change_handler(self, data):
-        await self.send_messages(data["recipient"])
 
     @database_sync_to_async
     def chat_message_read_handler(self, data):
@@ -134,35 +88,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             message.view_timestamp = timezone.now()
             message.is_read = True
             message.save()
-
-    async def send_messages(self, recipient_id):
-        @database_sync_to_async
-        def get_messages():
-            start_index = 0
-            end_index = start_index + self.PAGE_SIZE
-
-            messages = Message.objects.filter(
-                Q(sender_id=self.scope["user_id"], recipient_id=recipient_id) | Q(sender_id=recipient_id, recipient_id=self.scope["user_id"]),
-            ).order_by("-send_timestamp")[start_index:end_index]
-
-            return {
-                str(msg.message_id): {
-                    "message": msg.body,
-                    "sender": msg.sender_id,
-                    "recipient": msg.recipient_id,
-                    "timestamp": msg.send_timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-                }
-                for msg in messages
-            }
-
-        await self.send(
-            text_data=json.dumps(
-                {
-                    "type": "chat-new-window",
-                    "messages": await get_messages(),
-                },
-            ),
-        )
 
     @database_sync_to_async
     def save_message(self, sender, recipient, message):
