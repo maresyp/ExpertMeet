@@ -56,7 +56,6 @@ function ChatWindow({ recipientID }) {
     const [messages, setMessages] = useState([]);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true); // State to track if there are more messages to fetch
-    const [isAtBottom, setIsAtBottom] = useState(true); // State to track if the user is at the bottom of the chat
     const socketRef = useSocket();
     const messagesEndRef = useRef(null);
     const chatContainerRef = useRef(null);
@@ -111,11 +110,17 @@ function ChatWindow({ recipientID }) {
             const previousHeight = chatContainer.scrollHeight;
             const previousScrollTop = chatContainer.scrollTop;
 
+
             setMessages((prevMessages) => {
                 const newMessages = data.filter(
                     (newData) => !prevMessages.some((msg) => msg.message_id === newData.message_id)
                 );
-                const allMessages = [...newMessages, ...prevMessages];
+                let allMessages = [...newMessages, ...prevMessages];
+
+                // remove all messages belonging to other user
+                allMessages = allMessages.filter(
+                    (message) => message.recipient_id === recipientID
+                );
 
                 // Sort messages by timestamp
                 allMessages.sort((a, b) => new Date(a.send_timestamp) - new Date(b.send_timestamp));
@@ -127,14 +132,13 @@ function ChatWindow({ recipientID }) {
                 return allMessages;
             });
         }
-    }, [data]);
+    }, [data, recipientID]);
 
-    useEffect(() => {
-        if (!isLoading) {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [messages]);
+    // useEffect(() => {
+    //     setPage(1);
+    //     setMessages([]);
+    //     setHasMore(true);
+    // }, [recipientID]);
 
     const updateMessageHandler = (event) => {
         setUserMessage(event.target.value);
@@ -153,13 +157,13 @@ function ChatWindow({ recipientID }) {
             recipient: recipientID,
         }));
 
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); // TODO: make it scroll all the way down
+
         setUserMessage('');
     };
 
     const handleScroll = () => {
         const chatContainer = chatContainerRef.current;
-        const isBottom = chatContainer.scrollHeight - chatContainer.scrollTop === chatContainer.clientHeight;
-        setIsAtBottom(isBottom);
 
         if (chatContainer.scrollTop === 0 && !isLoading && hasMore) {
             setPage((prevPage) => prevPage + 1);
@@ -328,9 +332,8 @@ const Chat = () => {
         console.log("new user clicked", userID);
     }
 
-    if (newChatUserId) {
+    if (newChatUserId && (currentRecipient !== newChatUserId)) {
         console.log(newChatUserId);
-        if (currentRecipient === newChatUserId) return;
         setCurrentRecipient(newChatUserId)
         // TODO : handle new chat window
 
