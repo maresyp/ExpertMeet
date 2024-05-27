@@ -22,12 +22,21 @@ function useSocket() {
     const { authTokens } = React.useContext(AuthContext)
     const url = `ws://127.0.0.1:8082/ws/socket-server/chat/?token=${authTokens.access}`
     const socketRef = useRef();
+    const pingIntervalRef = useRef();
 
     useEffect(() => {
         socketRef.current = new WebSocket(url);
 
         socketRef.current.onopen = (event) => {
             console.log('WebSocket is open now.');
+
+            // Start sending ping messages every 30 seconds
+            pingIntervalRef.current = setInterval(() => {
+                if (socketRef.current.readyState === WebSocket.OPEN) {
+                    socketRef.current.send(JSON.stringify({ type: 'ping' }));
+                    console.log('WebSocket sent: ping');
+                }
+            }, 30000); // 30 seconds interval
         };
 
         socketRef.current.onmessage = (event) => {
@@ -44,6 +53,11 @@ function useSocket() {
 
         return () => {
             socketRef.current.close();
+
+            // Clear the ping interval on component unmount
+            if (pingIntervalRef.current) {
+                clearInterval(pingIntervalRef.current);
+            }
         };
     }, [url]);
 
@@ -59,12 +73,6 @@ function ChatWindow({ recipientID }) {
     const socketRef = useSocket();
     const messagesEndRef = useRef(null);
     const chatContainerRef = useRef(null);
-
-    // useEffect(() => {
-    //     socketRef.current.onmessage = (event) => {
-    //         console.log(event);
-    //     }
-    // }, [socketRef]);
 
     useQueryClient()
 
@@ -104,6 +112,12 @@ function ChatWindow({ recipientID }) {
     }
 
     useEffect(() => {
+        setPage(1);
+        setMessages([]);
+        setHasMore(true);
+    }, [recipientID]);
+
+    useEffect(() => {
         if (data) {
             console.log(data);
             const chatContainer = chatContainerRef.current;
@@ -119,7 +133,7 @@ function ChatWindow({ recipientID }) {
 
                 // remove all messages belonging to other user
                 allMessages = allMessages.filter(
-                    (message) => message.recipient_id === recipientID
+                    (message) => message.recipient_id === recipientID || message.sender_id === recipientID
                 );
 
                 // Sort messages by timestamp
@@ -133,12 +147,6 @@ function ChatWindow({ recipientID }) {
             });
         }
     }, [data, recipientID]);
-
-    // useEffect(() => {
-    //     setPage(1);
-    //     setMessages([]);
-    //     setHasMore(true);
-    // }, [recipientID]);
 
     const updateMessageHandler = (event) => {
         setUserMessage(event.target.value);
@@ -384,7 +392,7 @@ const Chat = () => {
                             })}
                         </List>
                     </Grid>
-                    <ChatWindow recipientID={currentRecipient} />
+                    <ChatWindow key={currentRecipient} recipientID={currentRecipient} />
                 </Grid>
             </Box>
         </Container>
