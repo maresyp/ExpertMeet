@@ -72,19 +72,7 @@ async def test_chat(user):
     })
 
     await communicator.send_json_to({
-        "type": "recipient-change",
-        "message": "chunk one \x01 chunk two",
-        "recipient": 10,
-    })
-
-    await communicator.send_json_to({
         "type": "chat_message_read",
-        "message": "chunk one \x01 chunk two",
-        "recipient": 10,
-    })
-
-    await communicator.send_json_to({
-        "type": "chat-request-more-messages",
         "message": "chunk one \x01 chunk two",
         "recipient": 10,
     })
