@@ -18,7 +18,7 @@ import AuthContext from '../context/AuthContext';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-function useSocket() {
+function useSocket(onMessageCallback) {
     const { authTokens } = React.useContext(AuthContext)
     const url = `ws://127.0.0.1:8082/ws/socket-server/chat/?token=${authTokens.access}`
     const socketRef = useRef();
@@ -40,7 +40,8 @@ function useSocket() {
         };
 
         socketRef.current.onmessage = (event) => {
-            console.log('Received:', event.data);
+            console.log('WebSocket Received:', event.data);
+            onMessageCallback && onMessageCallback(event.data);
         };
 
         socketRef.current.onclose = (event) => {
@@ -59,6 +60,7 @@ function useSocket() {
                 clearInterval(pingIntervalRef.current);
             }
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [url]);
 
     return socketRef;
@@ -70,7 +72,9 @@ function ChatWindow({ recipientID }) {
     const [messages, setMessages] = useState([]);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true); // State to track if there are more messages to fetch
-    const socketRef = useSocket();
+    const socketRef = useSocket((message) => {
+        console.log("First Callback");
+    });
     const messagesEndRef = useRef(null);
     const chatContainerRef = useRef(null);
 
@@ -249,7 +253,9 @@ const Chat = () => {
     const { newChatUserId } = useParams(null);
     const { user, authTokens } = React.useContext(AuthContext)
     const [conversations, setConversations] = useState([]);
-    const socketRef = useSocket();
+    const socketRef = useSocket((message) => {
+        console.log("Second Callback");
+    });
     const [currentRecipient, setCurrentRecipient] = useState(null);
 
     const fetchConversations = async ({ signal }) => {
@@ -392,7 +398,7 @@ const Chat = () => {
                             })}
                         </List>
                     </Grid>
-                    <ChatWindow key={currentRecipient} recipientID={currentRecipient} />
+                    <ChatWindow recipientID={currentRecipient} />
                 </Grid>
             </Box>
         </Container>
