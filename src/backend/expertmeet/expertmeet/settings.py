@@ -35,7 +35,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = str(os.getenv("DEBUG")).lower() == "true"
 
 ALLOWED_HOSTS: list[str] = ["127.0.0.1", "localhost", "*"]
-CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8080"]
+CSRF_TRUSTED_ORIGINS = ["http://localhost:8080", "http://127.0.0.1:8080"]
 
 # Application definition
 
