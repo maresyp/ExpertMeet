@@ -32,6 +32,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     await self.chat_message_handler(text_data_json)
                 case "chat-message-read":
                     await self.chat_message_read_handler(text_data_json)
+                case "ping":
+                    await self.chat_ping_handler(text_data_json)
         except KeyError:
             return
 
@@ -40,6 +42,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def chat_error_handler(self, error):
         await self.send(text_data=json.dumps({"type": "chat-error", "error": error}))
+
+    async def chat_ping_handler(self, _data):
+        await self.send(text_data=json.dumps({"type": "pong"}))
 
     async def chat_message_handler(self, data):
         message = data["message"]
@@ -68,11 +73,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             text_data=json.dumps(
                 {
                     "type": "chat-single-message",
-                    "message": event["message"],
+                    "body": event["message"],
                     "message_id": str(event["message_id"]),
                     "sender": event["sender"],
                     "recipient": event["recipient"],
-                    "timestamp": timezone.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "send_timestamp": timezone.now().isoformat(),
                 },
             ),
         )
