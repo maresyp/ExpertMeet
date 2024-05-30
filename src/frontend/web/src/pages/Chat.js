@@ -18,52 +18,60 @@ import AuthContext from '../context/AuthContext';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-function useSocket(onMessageCallback) {
+function useSocket() {
     const { authTokens } = React.useContext(AuthContext)
     const url = `ws://127.0.0.1:8082/ws/socket-server/chat/?token=${authTokens.access}`
     const socketRef = useRef();
     const pingIntervalRef = useRef();
 
+    const [socketLastMessage, setSocketLastMessage] = useState(null);
+
     useEffect(() => {
-        socketRef.current = new WebSocket(url);
+        if (!socketRef.current) {
+            socketRef.current = new WebSocket(url);
 
-        socketRef.current.onopen = (event) => {
-            console.log('WebSocket is open now.');
+            socketRef.current.onopen = (event) => {
+                console.log('WebSocket is open now.');
 
-            // Start sending ping messages every 30 seconds
-            pingIntervalRef.current = setInterval(() => {
-                if (socketRef.current.readyState === WebSocket.OPEN) {
-                    socketRef.current.send(JSON.stringify({ type: 'ping' }));
-                    console.log('WebSocket sent: ping');
+                // Start sending ping messages every 30 seconds
+                pingIntervalRef.current = setInterval(() => {
+                    if (socketRef.current.readyState === WebSocket.OPEN) {
+                        socketRef.current.send(JSON.stringify({ type: 'ping' }));
+                        console.log('WebSocket sent: ping');
+                    }
+                }, 30000); // 30 seconds interval
+            };
+
+            socketRef.current.onmessage = (event) => {
+                console.log('WebSocket Received:', event.data);
+                setSocketLastMessage(JSON.parse(event.data));
+            };
+
+            socketRef.current.onclose = (event) => {
+                console.log('WebSocket is closed now.');
+            };
+
+            socketRef.current.onerror = (event) => {
+                console.error('WebSocket error: ', event);
+            };
+
+            return () => {
+                if (socketRef.current) {
+                    socketRef.current.close();
+                    socketRef.current = null;
                 }
-            }, 30000); // 30 seconds interval
-        };
 
-        socketRef.current.onmessage = (event) => {
-            console.log('WebSocket Received:', event.data);
-            onMessageCallback && onMessageCallback(event.data);
-        };
-
-        socketRef.current.onclose = (event) => {
-            console.log('WebSocket is closed now.');
-        };
-
-        socketRef.current.onerror = (event) => {
-            console.error('WebSocket error: ', event);
-        };
-
-        return () => {
-            socketRef.current.close();
-
-            // Clear the ping interval on component unmount
-            if (pingIntervalRef.current) {
-                clearInterval(pingIntervalRef.current);
-            }
-        };
+                // Clear the ping interval on component unmount
+                if (pingIntervalRef.current) {
+                    clearInterval(pingIntervalRef.current);
+                    pingIntervalRef.current = null;
+                }
+            };
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [url]);
 
-    return socketRef;
+    return [socketRef.current, socketLastMessage];
 }
 
 function ChatWindow({ recipientID }) {
@@ -72,13 +80,15 @@ function ChatWindow({ recipientID }) {
     const [messages, setMessages] = useState([]);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true); // State to track if there are more messages to fetch
-    const socketRef = useSocket((message) => {
-        console.log("First Callback");
-    });
+    const [socketRef, lastMessage] = useSocket();
     const messagesEndRef = useRef(null);
     const chatContainerRef = useRef(null);
 
     useQueryClient()
+
+    useEffect(() => {
+        console.log('ChatWindow Last message changed:', lastMessage);
+    }, [lastMessage]);
 
     const fetchMessages = async ({ queryKey }) => {
         // eslint-disable-next-line no-unused-vars
@@ -163,7 +173,7 @@ function ChatWindow({ recipientID }) {
 
         setMessages([...messages, { sender_id: user.user_id, body: userMessage, send_timestamp: new Date() }]);
 
-        socketRef.current.send(JSON.stringify({
+        socketRef.send(JSON.stringify({
             type: 'chat-message',
             message: userMessage,
             recipient: recipientID,
@@ -253,10 +263,12 @@ const Chat = () => {
     const { newChatUserId } = useParams(null);
     const { user, authTokens } = React.useContext(AuthContext)
     const [conversations, setConversations] = useState([]);
-    const socketRef = useSocket((message) => {
-        console.log("Second Callback");
-    });
+    const [socketRef, lastMessage] = useSocket();
     const [currentRecipient, setCurrentRecipient] = useState(null);
+
+    useEffect(() => {
+        console.log('Chat Last message changed:', lastMessage);
+    }, [lastMessage]);
 
     const fetchConversations = async ({ signal }) => {
         const res = await fetch(`http://127.0.0.1:8082/api/chat/conversations/`, {
@@ -339,7 +351,7 @@ const Chat = () => {
 
     const handleFriendClick = (userID) => {
         setCurrentRecipient(userID)
-        socketRef.current.send(JSON.stringify({
+        socketRef.send(JSON.stringify({
             'type': 'chat_message_read',
             'recipient': userID
         }))
