@@ -19,20 +19,24 @@ import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 function useSocket() {
-    const { authTokens } = React.useContext(AuthContext)
-    const url = `ws://127.0.0.1:8082/ws/socket-server/chat/?token=${authTokens.access}`
+    const { authTokens } = React.useContext(AuthContext);
+    const url = `ws://127.0.0.1:8082/ws/socket-server/chat/?token=${authTokens.access}`;
     const socketRef = useRef();
     const pingIntervalRef = useRef();
-
     const [socketLastMessage, setSocketLastMessage] = useState(null);
 
     useEffect(() => {
-        if (!socketRef.current) {
+
+        const connectWebSocket = () => {
+            if (socketRef.current && (socketRef.current.readyState === WebSocket.OPEN)) {
+                console.log('WebSocket is already open.');
+                return;
+            }
+
             socketRef.current = new WebSocket(url);
 
-            socketRef.current.onopen = (event) => {
+            socketRef.current.onopen = () => {
                 console.log('WebSocket is open now.');
-
                 // Start sending ping messages every 30 seconds
                 pingIntervalRef.current = setInterval(() => {
                     if (socketRef.current.readyState === WebSocket.OPEN) {
@@ -44,32 +48,40 @@ function useSocket() {
 
             socketRef.current.onmessage = (event) => {
                 console.log('WebSocket Received:', event.data);
-                setSocketLastMessage(JSON.parse(event.data));
+                const data = JSON.parse(event.data)
+                switch (data.type) {
+                    case "chat-single-message":
+                        setSocketLastMessage(data);
+                        break
+                    default:
+                        break
+                }
             };
 
             socketRef.current.onclose = (event) => {
-                console.log('WebSocket is closed now.');
+                console.log('WebSocket is closed now.', event);
+                clearInterval(pingIntervalRef.current);
+                // Attempt to reconnect after a delay
+                setTimeout(connectWebSocket, 5000);
             };
 
             socketRef.current.onerror = (event) => {
                 console.error('WebSocket error: ', event);
             };
+        };
 
-            return () => {
-                if (socketRef.current) {
-                    socketRef.current.close();
-                    socketRef.current = null;
-                }
-
-                // Clear the ping interval on component unmount
-                if (pingIntervalRef.current) {
-                    clearInterval(pingIntervalRef.current);
-                    pingIntervalRef.current = null;
-                }
-            };
+        if (!socketRef.current) {
+            connectWebSocket();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [url]);
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.close();
+                socketRef.current = null;
+            }
+            clearInterval(pingIntervalRef.current);
+        };
+    }, [url, authTokens.access]);
 
     return [socketRef.current, socketLastMessage];
 }
@@ -88,6 +100,15 @@ function ChatWindow({ recipientID }) {
 
     useEffect(() => {
         console.log('ChatWindow Last message changed:', lastMessage);
+        if (lastMessage) {
+            switch (lastMessage.type) {
+                case "chat-single-message":
+                    setMessages(oldMessages => [...oldMessages, lastMessage]);
+                    break
+                default:
+                    break
+            }
+        }
     }, [lastMessage]);
 
     const fetchMessages = async ({ queryKey }) => {
@@ -258,7 +279,6 @@ function ChatWindow({ recipientID }) {
 }
 
 const Chat = () => {
-    // Used for creation of new chat when accessing /chat/<id>
     useQueryClient()
     const { newChatUserId } = useParams(null);
     const { user, authTokens } = React.useContext(AuthContext)
@@ -358,6 +378,7 @@ const Chat = () => {
         console.log("new user clicked", userID);
     }
 
+    // Used for creation of new chat when accessing /chat/<id>
     if (newChatUserId && (currentRecipient !== newChatUserId)) {
         console.log(newChatUserId);
         setCurrentRecipient(newChatUserId)
