@@ -120,6 +120,7 @@ function ChatWindow({ recipientID, profile }) {
     };
 
     const sendMessageHandler = () => {
+        // TODO: sending a new message should somehow update conversations ( sort it again )
         if (!userMessage) {
             return
         }
@@ -225,8 +226,11 @@ const Chat = () => {
     const { newChatUserId } = useParams(null);
     const { user, authTokens } = React.useContext(AuthContext)
     const [conversations, setConversations] = useState([]);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true); // State to track if there are more conversations to fetch
     const { sendJsonMessage, lastJsonMessage, readyState, getWebSocket } = ChatWebSocket();
     const [currentRecipient, setCurrentRecipient] = useState(null);
+    const friendsContainerRef = useRef(null);
 
     useEffect(() => {
         // TODO: add indicator of new message and sort conversations
@@ -235,19 +239,28 @@ const Chat = () => {
         }
     }, [lastJsonMessage]);
 
-    const fetchConversations = async ({ signal }) => {
-        const res = await fetch(`http://127.0.0.1:8082/api/chat/conversations/`, {
-            signal,
+    const fetchConversations = async ({ queryKey }) => {
+        // eslint-disable-next-line no-unused-vars
+        const [_key, page, hasMore] = queryKey;
+        const response = await fetch(`http://127.0.0.1:8082/api/chat/conversations/?page=${page}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${authTokens?.access}`
             },
         });
-        if (!res.ok) {
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                setHasMore(false);
+                throw new Error('There are no more conversations to download.');
+            }
             throw new Error('Failed to fetch');
         }
-        return res.json();
+
+        const data = await response.json();
+
+        return data;
     };
 
     const fetchUserData = async (userID) => {
@@ -263,8 +276,10 @@ const Chat = () => {
     };
 
     const { isLoading, data, error } = useQuery({
-        queryKey: ['ChatFriends'],
-        queryFn: fetchConversations
+        queryKey: ['ChatFriends', page, hasMore],
+        queryFn: fetchConversations,
+        enabled: hasMore,
+        keepPreviousData: true,
     })
 
     if (isLoading) {
@@ -296,9 +311,17 @@ const Chat = () => {
                     }
                 }));
 
+
                 updatedConversations.sort((a, b) => new Date(a.last_message_time) - new Date(b.last_message_time));
                 updatedConversations.reverse();
-                setConversations(updatedConversations);
+
+                setConversations((prevConversations) => {
+                    const filteredConversations = updatedConversations.filter(
+                        (newData) => !prevConversations.some((cov) => cov.id === newData.id)
+                    );
+                    return [...prevConversations, ...filteredConversations]
+                }
+                );
 
                 // Set currentRecipient to the first conversation's profile ID if not already set
                 if (!currentRecipient && updatedConversations.length > 0) {
@@ -334,6 +357,24 @@ const Chat = () => {
 
     }
 
+    const handleScroll = () => {
+        const friendsContainer = friendsContainerRef.current;
+        if (friendsContainer.scrollTop + friendsContainer.clientHeight >= friendsContainer.scrollHeight) {
+            if (!isLoading && hasMore) {
+                setPage((prevPage) => prevPage + 1);
+            }
+        }
+    };
+
+    useEffect(() => {
+        const friendsContainer = friendsContainerRef.current;
+        friendsContainer.addEventListener('scroll', handleScroll);
+        return () => {
+            friendsContainer.removeEventListener('scroll', handleScroll);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoading, hasMore]);
+
     return (
         <Container component="main" maxWidth="lg" sx={{ height: '700px' }}>
             <CssBaseline />
@@ -347,10 +388,11 @@ const Chat = () => {
             >
                 <Grid container>
                     <Grid item xs={12} >
-                        <Typography variant="h5" className="header-message">Czat</Typography>
+                        <Typography variant="h5" className="header-message" style={{ textAlign: 'center', paddingBottom: '25px' }}>Czat</Typography>
                     </Grid>
                 </Grid>
-                <Grid container component={Paper} sx={{
+                <Grid container component={Paper}
+                    sx={{
                     width: '100%',
                     height: "700px",
                     display: 'flex',
@@ -363,7 +405,7 @@ const Chat = () => {
                             <TextField id="outlined-friend-search" label="Wyszukaj" variant="outlined" fullWidth />
                         </Grid>
 
-                        <List sx={{ flexGrow: 1, maxHeight: "625px", overflowY: 'auto' }}>
+                        <List ref={friendsContainerRef} sx={{ flexGrow: 1, maxHeight: "625px", overflowY: 'auto' }}>
                             {conversations.map((conversation, index) => {
                                 const profile = conversation.profile
                                 return (
