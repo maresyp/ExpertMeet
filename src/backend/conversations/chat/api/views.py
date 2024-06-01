@@ -52,6 +52,7 @@ def get_conversations(request):
 
     # Set up pagination
     paginator = StandardResultsSetPagination()
+    paginator.page_size = 15
     paginated_conversations = paginator.paginate_queryset(conversations, request)
 
     serializer = ConversationSerializer(paginated_conversations, many=True)

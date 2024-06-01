@@ -31,3 +31,9 @@ class UserSerializer(ModelSerializer):
     class Meta:
         model = User
         fields: ClassVar = ["id", "username", "first_name", "last_name"]
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep["first_name"] = rep["first_name"].capitalize()
+        rep["last_name"] = rep["last_name"].capitalize()
+        return rep

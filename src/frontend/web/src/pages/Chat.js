@@ -18,8 +18,11 @@ import AuthContext from '../context/AuthContext';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChatWebSocket } from '../components/ws/ChatWebSocket';
+import MarkChatReadOutlinedIcon from '@mui/icons-material/MarkChatReadOutlined';
+import CallIcon from '@mui/icons-material/Call';
+import { IconButton, Tooltip } from '@mui/material';
 
-function ChatWindow({ recipientID }) {
+function ChatWindow({ recipientID, profile }) {
     const { user, authTokens } = React.useContext(AuthContext);
     const [userMessage, setUserMessage] = useState('');
     const [messages, setMessages] = useState([]);
@@ -31,13 +34,12 @@ function ChatWindow({ recipientID }) {
 
     useEffect(() => {
         if (lastJsonMessage !== null) {
-            console.log('ChatWindow Received:', lastJsonMessage);
             if (lastJsonMessage.type === "chat-single-message" && lastJsonMessage.sender === recipientID) {
                 lastJsonMessage.send_timestamp = new Date(lastJsonMessage.send_timestamp)
-                console.log("changed - ", lastJsonMessage);
                 setMessages(oldMessages => [...oldMessages, lastJsonMessage]);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lastJsonMessage]);
 
     useQueryClient()
@@ -85,7 +87,6 @@ function ChatWindow({ recipientID }) {
 
     useEffect(() => {
         if (data) {
-            console.log(data);
             const chatContainer = chatContainerRef.current;
             const previousHeight = chatContainer.scrollHeight;
             const previousScrollTop = chatContainer.scrollTop;
@@ -155,6 +156,16 @@ function ChatWindow({ recipientID }) {
 
     return (
         <Grid item xs={9} sx={{ display: 'flex', flexDirection: 'column', height: '700px' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', maxHeight: '65px' }}>
+                <Avatar alt={profile?.first_name || 'P'} src={`http://127.0.0.1:8080/api/profile/get_avatar_by_user/${profile?.id}`} />
+                <Typography variant="h6" style={{ fontWeight: 'bold' }}>{profile?.first_name} {profile?.last_name} </Typography>
+                <Tooltip title="Zadzwoń">
+                    <IconButton>
+                        <CallIcon sx={{ fontSize: 25 }} />
+                    </IconButton>
+                </Tooltip>
+            </Box>
+            <Divider />
             <Box ref={chatContainerRef} sx={{ overflow: 'auto', flex: 1 }}>
                 <List sx={{ flex: 1, overflowY: 'auto' }}>
                     {messages.map((message, index) => (
@@ -218,6 +229,7 @@ const Chat = () => {
     const [currentRecipient, setCurrentRecipient] = useState(null);
 
     useEffect(() => {
+        // TODO: add indicator of new message and sort conversations
         if (lastJsonMessage !== null) {
             console.log('Chat Received:', lastJsonMessage);
         }
@@ -265,7 +277,6 @@ const Chat = () => {
 
     useEffect(() => {
         if (data) {
-            console.log(data);
             const loadUsers = async () => {
                 const updatedConversations = await Promise.all(data.map(async (conversation) => {
                     const otherPersonId = conversation.person1 === user.user_id ? conversation.person2 : conversation.person1;
@@ -349,8 +360,7 @@ const Chat = () => {
                         flexDirection: 'column',
                     }}>
                         <Grid item xs={12} style={{ padding: '10px' }}>
-                            <TextField id="outlined-basic-email" label="Wyszukaj" variant="outlined" fullWidth />
-
+                            <TextField id="outlined-friend-search" label="Wyszukaj" variant="outlined" fullWidth />
                         </Grid>
 
                         <List sx={{ flexGrow: 1, maxHeight: "625px", overflowY: 'auto' }}>
@@ -368,7 +378,7 @@ const Chat = () => {
                             })}
                         </List>
                     </Grid>
-                    <ChatWindow recipientID={currentRecipient} />
+                    <ChatWindow recipientID={currentRecipient} profile={conversations.find(conversation => conversation.profile.id === currentRecipient)?.profile} />
                 </Grid>
             </Box>
         </Container>
