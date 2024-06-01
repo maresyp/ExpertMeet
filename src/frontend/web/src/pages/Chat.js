@@ -22,12 +22,13 @@ import MarkChatReadOutlinedIcon from '@mui/icons-material/MarkChatReadOutlined';
 import CallIcon from '@mui/icons-material/Call';
 import { IconButton, Tooltip } from '@mui/material';
 
-function ChatWindow({ recipientID, profile }) {
+function ChatWindow({ recipientID, profile, newMessageCallback }) {
     const { user, authTokens } = React.useContext(AuthContext);
     const [userMessage, setUserMessage] = useState('');
     const [messages, setMessages] = useState([]);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true); // State to track if there are more messages to fetch
+    // eslint-disable-next-line no-unused-vars
     const { sendJsonMessage, lastJsonMessage, readyState, getWebSocket } = ChatWebSocket();
     const messagesEndRef = useRef(null);
     const chatContainerRef = useRef(null);
@@ -120,7 +121,6 @@ function ChatWindow({ recipientID, profile }) {
     };
 
     const sendMessageHandler = () => {
-        // TODO: sending a new message should somehow update conversations ( sort it again )
         if (!userMessage) {
             return
         }
@@ -132,6 +132,8 @@ function ChatWindow({ recipientID, profile }) {
             message: userMessage,
             recipient: recipientID,
         })
+
+        newMessageCallback(recipientID);
 
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); // TODO: make it scroll all the way down
 
@@ -228,6 +230,7 @@ const Chat = () => {
     const [conversations, setConversations] = useState([]);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true); // State to track if there are more conversations to fetch
+    // eslint-disable-next-line no-unused-vars
     const { sendJsonMessage, lastJsonMessage, readyState, getWebSocket } = ChatWebSocket();
     const [currentRecipient, setCurrentRecipient] = useState(null);
     const friendsContainerRef = useRef(null);
@@ -238,6 +241,20 @@ const Chat = () => {
             console.log('Chat Received:', lastJsonMessage);
         }
     }, [lastJsonMessage]);
+
+    // Used for updating conversations when new message was sent in chat component
+    const newMessageCallback = (userID) => {
+        // Create a new array from the current conversations
+        const updatedConversations = [...conversations];
+
+        const conversation = updatedConversations.find(cov => (cov.person1 === userID || cov.person2 === userID));
+        if (conversation) {
+            conversation.last_message_time = new Date().toISOString();
+            updatedConversations.sort((a, b) => new Date(a.last_message_time) - new Date(b.last_message_time));
+            updatedConversations.reverse();
+            setConversations(updatedConversations);
+        }
+    }
 
     const fetchConversations = async ({ queryKey }) => {
         // eslint-disable-next-line no-unused-vars
@@ -420,7 +437,7 @@ const Chat = () => {
                             })}
                         </List>
                     </Grid>
-                    <ChatWindow recipientID={currentRecipient} profile={conversations.find(conversation => conversation.profile.id === currentRecipient)?.profile} />
+                    <ChatWindow recipientID={currentRecipient} profile={conversations.find(conversation => conversation.profile.id === currentRecipient)?.profile} newMessageCallback={newMessageCallback} />
                 </Grid>
             </Box>
         </Container>

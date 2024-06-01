@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useRef, useContext } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import AuthContext from '../../context/AuthContext';
