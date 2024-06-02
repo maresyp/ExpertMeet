@@ -154,11 +154,21 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 ASGI_APPLICATION = "conversations.asgi.application"
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-    },
-}
+if DEBUG:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_rabbitmq.core.RabbitmqChannelLayer",
+            "CONFIG": {  # type: ignore [dict-item]
+                "host": "amqp://guest:guest@celery-message-broker:5672/%2F",
+            },
+        },
+    }
 
 # Celery Configuration Options
 CELERY_BROKER_URL = "celery-message-broker"

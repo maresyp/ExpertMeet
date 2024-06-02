@@ -8,10 +8,6 @@ from django.utils import timezone
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(args, kwargs)
-        self.room_group_name = None
-
     async def connect(self):
         self.room_group_name = f"chat_{self.scope['user_id']}"
         await self.channel_layer.group_add(
@@ -28,9 +24,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         try:
             match text_data_json["type"]:
-                case "chat-message":
+                case "chat_message":
                     await self.chat_message_handler(text_data_json)
-                case "chat-message-read":
+                case "chat_message_read":
                     await self.chat_message_read_handler(text_data_json)
                 case "ping":
                     await self.chat_ping_handler(text_data_json)
@@ -44,7 +40,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({"type": "chat-error", "error": error}))
 
     async def chat_ping_handler(self, _data):
-        await self.send(text_data=json.dumps({"type": "pong"}))
+        await self.send(text_data="pong")
 
     async def chat_message_handler(self, data):
         message = data["message"]
@@ -55,14 +51,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user = int(self.scope["user_id"])
 
         message_id = await self.save_message(user, recipient, message)
-
         # Update the recipient with the new message
         await self.channel_layer.group_send(
             f"chat_{recipient}",
             {
                 "type": "chat_message",
                 "message": message,
-                "message_id": message_id,
+                "message_id": str(message_id),
                 "sender": user,
                 "recipient": recipient,
             },

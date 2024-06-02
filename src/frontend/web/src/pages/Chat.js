@@ -29,7 +29,7 @@ function ChatWindow({ recipientID, profile, newMessageCallback }) {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true); // State to track if there are more messages to fetch
     // eslint-disable-next-line no-unused-vars
-    const { sendJsonMessage, lastJsonMessage, readyState, getWebSocket } = ChatWebSocket();
+    const { sendJsonMessage, lastJsonMessage, readyState } = ChatWebSocket();
     const messagesEndRef = useRef(null);
     const chatContainerRef = useRef(null);
 
@@ -128,7 +128,7 @@ function ChatWindow({ recipientID, profile, newMessageCallback }) {
         setMessages([...messages, { sender_id: user.user_id, body: userMessage, send_timestamp: new Date() }]);
 
         sendJsonMessage({
-            type: 'chat-message',
+            type: 'chat_message',
             message: userMessage,
             recipient: recipientID,
         })
@@ -231,16 +231,9 @@ const Chat = () => {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true); // State to track if there are more conversations to fetch
     // eslint-disable-next-line no-unused-vars
-    const { sendJsonMessage, lastJsonMessage, readyState, getWebSocket } = ChatWebSocket();
+    const { sendJsonMessage, lastJsonMessage, readyState } = ChatWebSocket();
     const [currentRecipient, setCurrentRecipient] = useState(null);
     const friendsContainerRef = useRef(null);
-
-    useEffect(() => {
-        // TODO: add indicator of new message and sort conversations
-        if (lastJsonMessage !== null) {
-            console.log('Chat Received:', lastJsonMessage);
-        }
-    }, [lastJsonMessage]);
 
     // Used for updating conversations when new message was sent in chat component
     const newMessageCallback = (userID) => {
@@ -255,6 +248,21 @@ const Chat = () => {
             setConversations(updatedConversations);
         }
     }
+
+    useEffect(() => {
+        // TODO: add indicator of new message
+        if (lastJsonMessage !== null) {
+            console.log('Chat Received:', lastJsonMessage);
+            if (lastJsonMessage.type === "chat-single-message") {
+                newMessageCallback(lastJsonMessage.sender);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [lastJsonMessage]);
+
+    useEffect(() => {
+        console.log("Socket readyState: ", readyState);
+    }, [readyState]);
 
     const fetchConversations = async ({ queryKey }) => {
         // eslint-disable-next-line no-unused-vars

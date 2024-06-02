@@ -8,7 +8,7 @@ export const ChatWebSocket = () => {
     const { authTokens } = React.useContext(AuthContext);
     const WS_URL = "ws://127.0.0.1:8082/ws/socket-server/chat/"
 
-    const { sendJsonMessage, lastJsonMessage, readyState, getWebSocket } = useWebSocket(
+    const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
         WS_URL,
         {
             queryParams: {
@@ -18,12 +18,10 @@ export const ChatWebSocket = () => {
             shouldReconnect: (closeEvent) => true,
             retryOnError: true,
             reconnectAttempts: 600,
-            // 1 second, 2 seconds, 4 seconds, 8 seconds, caps at 10 seconds
-            reconnectInterval: (attemptNumber) =>
-                Math.min(Math.pow(2, attemptNumber) * 1000, 10000),
+            reconnectInterval: 5000, // try to reconnect every 5 seconds
             heartbeat: {
                 message: '{"type": "ping"}',
-                returnMessage: '{"type": "pong"}',
+                returnMessage: 'pong',
                 timeout: 60000, // 1 minute, if no response is received, the connection will be closed
                 interval: 25000, // every 25 seconds, a ping message will be sent
             },
@@ -33,10 +31,15 @@ export const ChatWebSocket = () => {
         }
     );
 
+    useEffect(() => {
+        if (lastJsonMessage !== null) {
+            console.log('Processing message:', lastJsonMessage);
+        }
+    }, [lastJsonMessage]);
+
     return {
         sendJsonMessage,
         lastJsonMessage,
         readyState,
-        getWebSocket
     };
 }
