@@ -27,7 +27,11 @@ export const ChatWebSocket = () => {
             },
             onOpen: () => console.log('ChatWebSocket opened.'),
             onClose: () => console.log('ChatWebSocket closed.'),
-            onMessage: (event) => console.log('ChatWebSocket received', event),
+            onMessage: (event) => {
+                if (event.data !== "pong") {
+                    console.log('ChatWebSocket received', event)
+                }
+            },
         }
     );
 
