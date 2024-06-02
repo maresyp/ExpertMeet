@@ -234,6 +234,18 @@ const Chat = () => {
     const { sendJsonMessage, lastJsonMessage, readyState } = ChatWebSocket();
     const [currentRecipient, setCurrentRecipient] = useState(null);
     const friendsContainerRef = useRef(null);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
+    };
+
+    // TODO: implement server side filtering
+    const filteredConversations = conversations.filter(conversation => {
+        const profile = conversation.profile;
+        const fullName = `${profile?.first_name || ''} ${profile?.last_name || ''}`.toLowerCase();
+        return fullName.includes(searchTerm.toLowerCase());
+    });
 
     // Used for updating conversations when new message was sent in chat component
     const newMessageCallback = (userID) => {
@@ -252,17 +264,12 @@ const Chat = () => {
     useEffect(() => {
         // TODO: add indicator of new message
         if (lastJsonMessage !== null) {
-            console.log('Chat Received:', lastJsonMessage);
             if (lastJsonMessage.type === "chat-single-message") {
                 newMessageCallback(lastJsonMessage.sender);
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lastJsonMessage]);
-
-    useEffect(() => {
-        console.log("Socket readyState: ", readyState);
-    }, [readyState]);
 
     const fetchConversations = async ({ queryKey }) => {
         // eslint-disable-next-line no-unused-vars
@@ -427,11 +434,11 @@ const Chat = () => {
                         flexDirection: 'column',
                     }}>
                         <Grid item xs={12} style={{ padding: '10px' }}>
-                            <TextField id="outlined-friend-search" label="Wyszukaj" variant="outlined" fullWidth />
+                            <TextField id="outlined-friend-search" label="Wyszukaj" variant="outlined" fullWidth onChange={handleSearchChange} />
                         </Grid>
 
                         <List ref={friendsContainerRef} sx={{ flexGrow: 1, maxHeight: "625px", overflowY: 'auto' }}>
-                            {conversations.map((conversation, index) => {
+                            {filteredConversations.map((conversation, index) => {
                                 const profile = conversation.profile
                                 return (
                                     <ListItem onClick={() => handleFriendClick(profile?.id)} button key={index}>

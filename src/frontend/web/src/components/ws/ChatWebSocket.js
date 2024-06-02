@@ -31,12 +31,6 @@ export const ChatWebSocket = () => {
         }
     );
 
-    useEffect(() => {
-        if (lastJsonMessage !== null) {
-            console.log('Processing message:', lastJsonMessage);
-        }
-    }, [lastJsonMessage]);
-
     return {
         sendJsonMessage,
         lastJsonMessage,
