@@ -20,7 +20,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChatWebSocket } from '../components/ws/ChatWebSocket';
 import MarkChatReadOutlinedIcon from '@mui/icons-material/MarkChatReadOutlined';
 import CallIcon from '@mui/icons-material/Call';
-import { IconButton, Tooltip } from '@mui/material';
+import { Badge, IconButton, Tooltip } from '@mui/material';
 
 function ChatWindow({ recipientID, profile, newMessageCallback }) {
     const { user, authTokens } = React.useContext(AuthContext);
@@ -254,6 +254,9 @@ const Chat = () => {
 
         const conversation = updatedConversations.find(cov => (cov.person1 === userID || cov.person2 === userID));
         if (conversation) {
+            if (conversation.person1 !== currentRecipient && conversation.person2 !== currentRecipient) {
+                conversation.unread = true;
+            }
             conversation.last_message_time = new Date().toISOString();
             updatedConversations.sort((a, b) => new Date(a.last_message_time) - new Date(b.last_message_time));
             updatedConversations.reverse();
@@ -358,11 +361,17 @@ const Chat = () => {
                 // Set currentRecipient to the first conversation's profile ID if not already set
                 if (!currentRecipient && updatedConversations.length > 0) {
                     setCurrentRecipient(updatedConversations[0].profile.id);
+                    updatedConversations[0].unread = false;
+                    sendJsonMessage({
+                        'type': 'chat_message_read',
+                        'recipient': updatedConversations[0].profile.id
+                    })
                 }
             };
 
             loadUsers();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data, user.user_id, currentRecipient]);
 
 
@@ -372,6 +381,11 @@ const Chat = () => {
 
     const handleFriendClick = (userID) => {
         setCurrentRecipient(userID)
+
+        const conversation = conversations.find(cov => (cov.person1 === userID || cov.person2 === userID));
+        if (conversation) {
+            conversation.unread = false;
+        }
 
         sendJsonMessage({
             'type': 'chat_message_read',
@@ -443,7 +457,9 @@ const Chat = () => {
                                 return (
                                     <ListItem onClick={() => handleFriendClick(profile?.id)} button key={index}>
                                     <ListItemIcon>
+                                            <Badge color="error" overlap="circular" badgeContent=" " variant="dot" invisible={!conversation.unread}>
                                             <Avatar alt={profile?.first_name || 'P'} src={`http://127.0.0.1:8080/api/profile/get_avatar_by_user/${profile?.id}`} />
+                                            </Badge>
                                     </ListItemIcon>
                                         <ListItemText primary={profile?.first_name + " " + profile?.last_name}></ListItemText>
                                     <ListItemText secondary={new Date(conversation.last_message_time).toLocaleTimeString()} align="right"></ListItemText>

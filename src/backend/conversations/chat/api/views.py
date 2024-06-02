@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from chat.models import Conversation, Message
-from django.db.models import DateTimeField, OuterRef, Q, Subquery
+from django.db.models import DateTimeField, Exists, OuterRef, Q, Subquery
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -42,9 +42,17 @@ def get_conversations(request):
         .values("send_timestamp")[:1]
     )
 
+    # Subquery to check for unread messages
+    unread_subquery = Message.objects.filter(
+        Q(sender_id=OuterRef("person1"), recipient_id=OuterRef("person2")) | Q(sender_id=OuterRef("person2"), recipient_id=OuterRef("person1")),
+        recipient_id=user_id,
+        view_timestamp__isnull=True,
+    )
+
     # Annotate conversations with the latest message timestamp
     conversations = Conversation.objects.filter(Q(person1=user_id) | Q(person2=user_id)).annotate(
         last_message_time=Subquery(latest_message_subquery, output_field=DateTimeField()),
+        unread=Exists(unread_subquery),
     )
 
     # Order conversations by the latest message timestamp
