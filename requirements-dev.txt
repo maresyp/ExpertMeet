@@ -6,3 +6,5 @@ pytest
 pytest-html
 pytest-cov
 pytest-django
+daphne
+pytest-asyncio

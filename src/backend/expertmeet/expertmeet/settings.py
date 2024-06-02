@@ -34,8 +34,8 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = str(os.getenv("DEBUG")).lower() == "true"
 
-ALLOWED_HOSTS: list[str] = ["127.0.0.1", "localhost"]
-
+ALLOWED_HOSTS: list[str] = ["127.0.0.1", "localhost", "*"]
+CSRF_TRUSTED_ORIGINS = ["http://localhost:8080", "http://127.0.0.1:8080"]
 
 # Application definition
 
@@ -99,7 +99,6 @@ MIDDLEWARE = [
     #
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -197,3 +196,5 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+STATIC_ROOT = BASE_DIR / "staticfiles"

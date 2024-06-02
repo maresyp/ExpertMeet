@@ -1,4 +1,3 @@
-version: "3.9"
 name: expertmeet
 
 services:
@@ -7,18 +6,27 @@ services:
     build:
       src/frontend/web
     ports:
+      - 3000:3000 # TODO: change port for prod
       - 80:80
     depends_on:
       - expertmeet-nginx-server
       - notifications-nginx-server
       - conversations-nginx-server
+    develop:
+      watch:
+        - action: rebuild
+          path: ./src/frontend/web
+          target: /app
+          ignore:
+          - node_modules/
+        - action: rebuild
+          path: package.json
 
   expertmeet-nginx-server:
-    env_file:
-      - .env
     container_name: expertmeet-nginx-server
     build:
-      src/backend/expertmeet/nginx
+      context: ./src/backend/expertmeet/
+      dockerfile: DockerfileNginx
     ports:
       - 8080:8080
     depends_on:
@@ -34,6 +42,11 @@ services:
       src/backend/expertmeet
     depends_on:
       - expertmeet-db-postgres
+    develop:
+      watch:
+        - action: sync+restart
+          path: src/backend/expertmeet
+          target: /usr/src/app
 
   expertmeet-db-postgres:
     container_name: expertmeet-web-db
@@ -56,10 +69,9 @@ services:
 
   notifications-nginx-server:
       container_name: notifications-nginx-server
-      env_file:
-      - .env
       build:
-        src/backend/notifications
+        context: ./src/backend/notifications/
+        dockerfile: DockerfileNginx
       ports:
         - 8081:8081
       depends_on:
@@ -75,6 +87,11 @@ services:
         src/backend/notifications
       depends_on:
         - notifications-db-postgres
+      develop:
+        watch:
+          - action: sync+restart
+            path: src/backend/notifications
+            target: /usr/src/app
 
   notifications-celery-server:
     container_name: notifications-celery-server
@@ -108,12 +125,11 @@ services:
 
   conversations-nginx-server:
         container_name: conversations-nginx-server
-        env_file:
-        - .env
         ports:
           - 8082:8082
         build:
-          src/backend/conversations
+          context: ./src/backend/conversations/
+          dockerfile: DockerfileNginx
         depends_on:
           - conversations-django-server
 
@@ -122,14 +138,30 @@ services:
         env_file:
         - .env
         expose:
-          - 8080
+          - 8000
         build:
           src/backend/conversations
         depends_on:
           - conversations-db-postgres
+        develop:
+          watch:
+            - action: sync+restart
+              path: src/backend/conversations
+              target: /usr/src/app
+
+  conversations-celery-server:
+    container_name: conversations-celery-server
+    env_file:
+      - .env
+    build:
+      context: src/backend/conversations
+      dockerfile: DockerfileCelery
+    depends_on:
+      - conversations-django-server
+      - celery-message-broker
 
   conversations-db-postgres:
-    container_name: expertmeet-conversations-db
+    container_name: conversations-db-postgres
     image: postgres
     user: postgres
     restart: "on-failure"

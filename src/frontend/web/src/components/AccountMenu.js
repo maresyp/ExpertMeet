@@ -28,6 +28,9 @@ export default function AccountMenu() {
     const handleProfile = () => {
         navigate("/profile")
     }
+    const handleChat = () => {
+        navigate("/chat")
+    }
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
     };
@@ -91,7 +94,7 @@ export default function AccountMenu() {
                 <MenuItem onClick={handleProfile}>
                     <Avatar /> Mój profil
                 </MenuItem>
-                <MenuItem onClick={handleClose}>
+                <MenuItem onClick={handleChat}>
                     <ListItemIcon>
                         <ChatIcon />
                     </ListItemIcon>

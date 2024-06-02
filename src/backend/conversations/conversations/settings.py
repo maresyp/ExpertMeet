@@ -30,8 +30,8 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = str(os.getenv("DEBUG")).lower() == "true"
 
-ALLOWED_HOSTS: list[str] = ["127.0.0.1", "localhost"]
-
+ALLOWED_HOSTS: list[str] = ["127.0.0.1", "localhost", "*"]
+CSRF_TRUSTED_ORIGINS = ["http://localhost:8082", "http://127.0.0.1:8082"]
 
 # Application definition
 
@@ -42,12 +42,26 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    #
+    "corsheaders",
+    "channels",
+    "rest_framework",
+    "rest_framework_simplejwt",
+    #
+    "chat",
+    "video",
 ]
+
+REST_FRAMEWORK = {"DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTStatelessUserAuthentication",)}
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
+    #
+    "corsheaders.middleware.CorsMiddleware",
+    #
     "django.middleware.common.CommonMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -137,3 +151,32 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+ASGI_APPLICATION = "conversations.asgi.application"
+
+if DEBUG:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_rabbitmq.core.RabbitmqChannelLayer",
+            "CONFIG": {  # type: ignore [dict-item]
+                "host": "amqp://guest:guest@celery-message-broker:5672/%2F",
+            },
+        },
+    }
+
+# Celery Configuration Options
+CELERY_BROKER_URL = "celery-message-broker"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ORIGIN_ALLOW_ALL = True
+
+STATIC_ROOT = BASE_DIR / "staticfiles"

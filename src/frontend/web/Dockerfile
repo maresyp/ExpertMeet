@@ -19,3 +19,17 @@ COPY --from=build /app/build /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 CMD ["nginx", "-g", "daemon off;"]
+
+# TODO: remove development mode, it breaks token auto refresh
+
+# FROM node
+
+# # Install dependencies
+# WORKDIR /app
+# COPY package*.json ./
+# RUN npm install
+
+# # Copy source files into application directory
+# COPY . /app
+
+# CMD ["npm", "start"]
