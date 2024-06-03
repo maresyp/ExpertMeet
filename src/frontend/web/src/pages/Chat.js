@@ -15,12 +15,11 @@ import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import AuthContext from '../context/AuthContext';
-import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChatWebSocket } from '../components/ws/ChatWebSocket';
-import MarkChatReadOutlinedIcon from '@mui/icons-material/MarkChatReadOutlined';
 import CallIcon from '@mui/icons-material/Call';
 import { Badge, IconButton, Tooltip } from '@mui/material';
+import { useParams, useNavigate } from 'react-router-dom';
 
 function ChatWindow({ recipientID, profile, newMessageCallback }) {
     const { user, authTokens } = React.useContext(AuthContext);
@@ -235,6 +234,7 @@ const Chat = () => {
     const [currentRecipient, setCurrentRecipient] = useState(null);
     const friendsContainerRef = useRef(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const navigate = useNavigate();
 
     const handleSearchChange = (event) => {
         setSearchTerm(event.target.value);
@@ -265,7 +265,6 @@ const Chat = () => {
     }
 
     useEffect(() => {
-        // TODO: add indicator of new message
         if (lastJsonMessage !== null) {
             if (lastJsonMessage.type === "chat-single-message") {
                 newMessageCallback(lastJsonMessage.sender);
@@ -346,17 +345,37 @@ const Chat = () => {
                     }
                 }));
 
+                const initializeNewChat = async () => {
+                    const userID = parseInt(newChatUserId)
+                    if (newChatUserId && currentRecipient && (currentRecipient !== userID)) {
+                        // Clear the newChatUserId parameter
+                        navigate('/chat', { replace: true });
+
+                        // if conversation with this user already exists ignore
+                        if (undefined === conversations.find(cov => (cov.person1 === userID || cov.person2 === userID))) {
+                            setCurrentRecipient(userID);
+
+                            const newConversation = { id: "unknown", person1: user.user_id, person2: userID, unread: false, last_message_time: new Date().toISOString() };
+                            newConversation.profile = await fetchUserData(userID);
+                            setConversations((prev) => [newConversation, ...prev]);
+                        } else {
+                            setCurrentRecipient(userID);
+                        }
+                    }
+                }
 
                 updatedConversations.sort((a, b) => new Date(a.last_message_time) - new Date(b.last_message_time));
                 updatedConversations.reverse();
 
                 setConversations((prevConversations) => {
                     const filteredConversations = updatedConversations.filter(
-                        (newData) => !prevConversations.some((cov) => cov.id === newData.id)
+                        (newData) => !prevConversations.some((cov) => (cov.id === newData.id) || (cov.profile.person1 === newData.profile.person1 && cov.profile.person2 === newData.profile.person2))
                     );
                     return [...prevConversations, ...filteredConversations]
                 }
                 );
+
+                initializeNewChat();
 
                 // Set currentRecipient to the first conversation's profile ID if not already set
                 if (!currentRecipient && updatedConversations.length > 0) {
@@ -393,14 +412,6 @@ const Chat = () => {
         })
 
         console.log("new user clicked", userID);
-    }
-
-    // Used for creation of new chat when accessing /chat/<id>
-    if (newChatUserId && (currentRecipient !== newChatUserId)) {
-        console.log(newChatUserId);
-        setCurrentRecipient(newChatUserId)
-        // TODO : handle new chat window
-
     }
 
     const handleScroll = () => {
