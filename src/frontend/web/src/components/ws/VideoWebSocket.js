@@ -5,14 +5,14 @@ import AuthContext from '../../context/AuthContext';
 
 
 export const VideoWebSocket = () => {
-    const { authTokens } = React.useContext(AuthContext);
+    const { user, authTokens } = React.useContext(AuthContext);
     const WS_URL = "ws://127.0.0.1:8082/ws/socket-server/video/"
 
     const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
         WS_URL,
         {
             queryParams: {
-                "token": authTokens.access
+                "token": authTokens?.access
             },
             share: true,
             shouldReconnect: (closeEvent) => true,
@@ -32,7 +32,8 @@ export const VideoWebSocket = () => {
                     console.log('VideoWebSocket received', event)
                 }
             },
-        }
+        },
+        user !== null
     );
 
     return {

@@ -12,6 +12,7 @@ import React from 'react';
 import MyProfile from './pages/MyProfile';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Chat from './pages/Chat';
+import VideoOverlay from './components/video/VideoOverlay';
 
 // Create a client for web requests
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ function App() {
         <AuthProvider>
           <AlertProvider>
               <QueryClientProvider client={queryClient}>
+                <VideoOverlay />
                 <NavBar />
                 <Routes>
                   <Route element={<HomePage />} exact path='/' />
