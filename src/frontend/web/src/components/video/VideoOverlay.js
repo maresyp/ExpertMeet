@@ -7,7 +7,7 @@ const VideoOverlay = () => {
     const [isCalling, setIsCalling] = useState(true);
 
     useEffect(() => {
-        if (lastJsonMessage && lastJsonMessage.type === "incoming_call") {
+        if (lastJsonMessage && lastJsonMessage.type === "video_offer") {
             setIsCalling(true);
         }
     }, [lastJsonMessage]);
@@ -18,6 +18,9 @@ const VideoOverlay = () => {
 
     const handleDeclineCall = () => {
         setIsCalling(false);
+        sendJsonMessage({
+            type: "video_rejected",
+        })
     };
 
     return (

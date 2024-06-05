@@ -13,6 +13,7 @@ import MyProfile from './pages/MyProfile';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Chat from './pages/Chat';
 import VideoOverlay from './components/video/VideoOverlay';
+import Video from './pages/Video';
 
 // Create a client for web requests
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ function App() {
                     <Route element={<MyProfile />} path='/profile' />
                     <Route element={<Chat />} path='/chat/:newChatUserId' />
                     <Route element={<Chat />} path='/chat' />
+                    <Route element={<Video />} path='/video' />
                   </Route>
                   {/* Fallback route */}
                   <Route path="*" element={<HomePage />} />

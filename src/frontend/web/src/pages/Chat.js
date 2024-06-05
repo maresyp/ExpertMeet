@@ -31,6 +31,7 @@ function ChatWindow({ recipientID, profile, newMessageCallback }) {
     const { sendJsonMessage, lastJsonMessage, readyState } = ChatWebSocket();
     const messagesEndRef = useRef(null);
     const chatContainerRef = useRef(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (lastJsonMessage !== null) {
@@ -147,6 +148,11 @@ function ChatWindow({ recipientID, profile, newMessageCallback }) {
         }
     };
 
+    const callButtonHandler = () => {
+        // navigate to video page and handle call from there
+        navigate("/video", { state: { userID: recipientID, action: "startCall" } })
+    }
+
     useEffect(() => {
         const chatContainer = chatContainerRef.current;
         chatContainer.addEventListener('scroll', handleScroll);
@@ -162,7 +168,7 @@ function ChatWindow({ recipientID, profile, newMessageCallback }) {
                 <Avatar alt={profile?.first_name || 'P'} src={`http://127.0.0.1:8080/api/profile/get_avatar_by_user/${profile?.id}`} />
                 <Typography variant="h6" style={{ fontWeight: 'bold' }}>{profile?.first_name} {profile?.last_name} </Typography>
                 <Tooltip title="Zadzwoń">
-                    <IconButton>
+                    <IconButton onClick={callButtonHandler}>
                         <CallIcon sx={{ fontSize: 25 }} />
                     </IconButton>
                 </Tooltip>
