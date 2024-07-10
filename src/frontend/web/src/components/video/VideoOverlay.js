@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 
 const VideoOverlay = () => {
     const { sendJsonMessage, lastJsonMessage, readyState } = VideoWebSocket();
-    const [isCalling, setIsCalling] = useState(true);
+    const [isCalling, setIsCalling] = useState(false);
 
     useEffect(() => {
         if (lastJsonMessage && lastJsonMessage.type === "video_offer") {

@@ -27,6 +27,25 @@ const Video = () => {
     const [videoEnabled, setVideoEnabled] = useState(true);
     const [screenEnabled, setScreenEnabled] = useState(false);
 
+    const connectionStatus = {
+        INIT: "init",
+        CALLING: 'calling'
+    };
+
+    const servers = {
+        iceServers: [
+            { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }
+        ]
+    };
+
+    const [videoState, setVideoState] = useState(connectionStatus.INIT);
+    const [localStream, setLocalStream] = useState(null);
+    const [remoteStream, setRemoteStream] = useState(null);
+    const [peerConnection, setPeerConnection] = useState(null);
+
+    const videoLocalRef = useRef(null);
+    const videoRemoteRef = useRef(null);
+
     const toggleMic = () => {
         setMicEnabled(!micEnabled);
     }
@@ -39,27 +58,116 @@ const Video = () => {
         setScreenEnabled(!screenEnabled);
     }
 
-    const connectionStatus = {
-        CALLING: 'calling'
-    };
-
-    const servers = {
-        iceServers: [
-            { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }
-        ]
-    };
-
     useEffect(() => {
         if (lastJsonMessage) {
             handleSocketMessage(lastJsonMessage);
         }
     }, [lastJsonMessage]);
 
+    useEffect(() => {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    if (videoLocalRef.current) {
+                        videoLocalRef.current.srcObject = stream;
+                    }
+                })
+                .catch(error => {
+                    console.error("Error accessing the camera: ", error);
+                });
+        }
+    }, []);
+
+    const startScreenShare = async () => {
+        try {
+            const screenStream = await navigator.mediaDevices.getDisplayMedia({
+                video: true,
+                audio: true
+            });
+
+            if (videoLocalRef.current) {
+                videoLocalRef.current.srcObject = screenStream;
+            }
+
+            // Handle the end of screen sharing
+            screenStream.getVideoTracks()[0].onended = () => {
+                stopScreenShare();
+            };
+        } catch (error) {
+            console.error("Error sharing the screen:", error);
+        }
+    };
+
+    const stopScreenShare = () => {
+        if (videoLocalRef.current && videoLocalRef.current.srcObject) {
+            videoLocalRef.current.srcObject.getTracks().forEach(track => track.stop());
+            videoLocalRef.current.srcObject = null;
+        }
+    };
+
     const handleSocketMessage = async (data) => {
 
     }
 
-    console.log(location.state);
+    const createPeerConnection = () => {
+        const pc = new RTCPeerConnection(servers);
+
+        const remoteStream = new MediaStream();
+        setRemoteStream(remoteStream);
+        if (videoRemoteRef.current) {
+            videoRemoteRef.current.srcObject = remoteStream;
+        }
+
+        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+        pc.ontrack = (event) => {
+            event.streams[0].getTracks().forEach(track => remoteStream.addTrack(track));
+        };
+
+        pc.onicecandidate = (event) => {
+            if (event.candidate) {
+                sendJsonMessage({
+                    type: 'video_ice_candidate',
+                    candidate: event.candidate,
+                    recipient: location.state.userID
+                });
+            }
+        };
+
+        setPeerConnection(pc);
+    };
+
+    const createOffer = async () => {
+        createPeerConnection();
+
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        return new Promise((resolve) => {
+            if (peerConnection.iceGatheringState === 'complete') {
+                resolve(peerConnection.localDescription);
+            } else {
+                peerConnection.addEventListener('icegatheringstatechange', function checkState() {
+                    if (peerConnection.iceGatheringState === 'complete') {
+                        peerConnection.removeEventListener('icegatheringstatechange', checkState);
+                        resolve(peerConnection.localDescription);
+                    }
+                });
+            }
+        });
+    };
+
+    const init = async () => {
+        if (location.state.action === "startCall" && videoState === connectionStatus.INIT) {
+            setVideoState(connectionStatus.CALLING);
+            sendJsonMessage({
+                type: "video_offer",
+                recipient: location.state.userID,
+                offer: await createOffer()
+            })
+        }
+    }
+
     return (
         <Container component="main" maxWidth="lg" sx={{ height: '700px' }}>
             <CssBaseline />
@@ -99,6 +207,7 @@ const Video = () => {
                     {/* Self Video */}
                     <Box
                         component="video"
+                        ref={videoLocalRef}
                         autoPlay
                         muted
                         sx={{
