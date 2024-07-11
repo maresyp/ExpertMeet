@@ -52,10 +52,16 @@ const Video = () => {
 
     const toggleVideo = () => {
         setVideoEnabled(!videoEnabled);
+        if (screenEnabled) {
+            setScreenEnabled(false);
+        }
     }
 
     const toggleScreenShare = () => {
         setScreenEnabled(!screenEnabled);
+        if (videoEnabled) {
+            setVideoEnabled(false);
+        }
     }
 
     useEffect(() => {
@@ -63,6 +69,11 @@ const Video = () => {
             handleSocketMessage(lastJsonMessage);
         }
     }, [lastJsonMessage]);
+
+
+    const handleSocketMessage = async (data) => {
+
+    }
 
     useEffect(() => {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -104,10 +115,6 @@ const Video = () => {
             videoLocalRef.current.srcObject = null;
         }
     };
-
-    const handleSocketMessage = async (data) => {
-
-    }
 
     const createPeerConnection = () => {
         const pc = new RTCPeerConnection(servers);
@@ -235,9 +242,15 @@ const Video = () => {
                         }}
                     >
                         <ButtonGroup color="info" variant="contained" aria-label="video call control buttons">
-                            <Button><MicOffIcon /></Button>
-                            <Button><VideocamOffIcon /></Button>
-                            <Button><ScreenShareIcon /></Button>
+                            <Button onClick={toggleMic}>
+                                {micEnabled ? <MicOffIcon /> : <MicIcon />}
+                            </Button>
+                            <Button onClick={toggleVideo}>
+                                {videoEnabled ? <VideocamOffIcon /> : <VideocamIcon />}
+                            </Button>
+                            <Button onClick={toggleScreenShare}>
+                                {screenEnabled ? <StopScreenShareIcon /> : <ScreenShareIcon />}
+                            </Button>
                         </ButtonGroup>
                     </Box>
                 </Grid>
