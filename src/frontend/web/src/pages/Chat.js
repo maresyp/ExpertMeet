@@ -353,6 +353,8 @@ const Chat = () => {
 
                 const initializeNewChat = async () => {
                     const userID = parseInt(newChatUserId)
+                    // TODO: There is a bug for initial users with 0 conversations that makes them unable to enter /chat/<id>
+                    // This if statement needs to be changed
                     if (newChatUserId && currentRecipient && (currentRecipient !== userID)) {
                         // Clear the newChatUserId parameter
                         navigate('/chat', { replace: true });
