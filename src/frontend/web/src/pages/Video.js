@@ -18,6 +18,8 @@ import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import ScreenShareIcon from '@mui/icons-material/ScreenShare';
 import StopScreenShareIcon from '@mui/icons-material/StopScreenShare';
+import CallEndIcon from '@mui/icons-material/CallEnd';
+import CallIcon from '@mui/icons-material/Call';
 
 const Video = () => {
     // eslint-disable-next-line no-unused-vars
@@ -29,7 +31,8 @@ const Video = () => {
 
     const connectionStatus = {
         INIT: "init",
-        CALLING: 'calling'
+        CALLING: 'calling',
+        ACTIVE: 'active',
     };
 
     const servers = {
@@ -39,12 +42,14 @@ const Video = () => {
     };
 
     const [videoState, setVideoState] = useState(connectionStatus.INIT);
-    const [localStream, setLocalStream] = useState(null);
+    const [localStream, setLocalStream] = useState(new MediaStream());
     const [remoteStream, setRemoteStream] = useState(null);
     const [peerConnection, setPeerConnection] = useState(null);
 
     const videoLocalRef = useRef(null);
     const videoRemoteRef = useRef(null);
+
+    const callButtonStyle = videoState === connectionStatus.ACTIVE ? { backgroundColor: 'red' } : { backgroundColor: 'green' };
 
     const toggleMic = () => {
         setMicEnabled(!micEnabled);
@@ -61,6 +66,14 @@ const Video = () => {
         setScreenEnabled(!screenEnabled);
         if (videoEnabled) {
             setVideoEnabled(false);
+        }
+    }
+
+    const toggleCallStatus = () => {
+        if (videoState === connectionStatus.ACTIVE) {
+            setVideoState(connectionStatus.INIT)
+        } else {
+            setVideoState(connectionStatus.CALLING)
         }
     }
 
@@ -250,6 +263,9 @@ const Video = () => {
                             </Button>
                             <Button onClick={toggleScreenShare}>
                                 {screenEnabled ? <StopScreenShareIcon /> : <ScreenShareIcon />}
+                            </Button>
+                            <Button onClick={toggleCallStatus} style={callButtonStyle}>
+                                {videoState === connectionStatus.ACTIVE ? <CallEndIcon /> : <CallIcon />}
                             </Button>
                         </ButtonGroup>
                     </Box>
