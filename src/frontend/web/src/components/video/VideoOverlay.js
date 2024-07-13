@@ -5,10 +5,12 @@ import React, { useState, useEffect } from 'react';
 const VideoOverlay = () => {
     const { sendJsonMessage, lastJsonMessage, readyState } = VideoWebSocket();
     const [isCalling, setIsCalling] = useState(false);
+    const [callStack, setCallStack] = useState([]);
 
     useEffect(() => {
         if (lastJsonMessage && lastJsonMessage.type === "video_offer") {
             setIsCalling(true);
+            setCallStack(prevStack => [...prevStack, lastJsonMessage.callerID]);
         }
     }, [lastJsonMessage]);
 
@@ -18,9 +20,13 @@ const VideoOverlay = () => {
 
     const handleDeclineCall = () => {
         setIsCalling(false);
-        sendJsonMessage({
-            type: "video_rejected",
+        callStack.forEach(callerID => {
+            sendJsonMessage({
+                type: "video_rejected",
+                recipient: callerID,
+            })
         })
+        setCallStack([]);
     };
 
     return (

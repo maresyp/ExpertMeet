@@ -4,12 +4,8 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 
 class VideoConsumer(AsyncWebsocketConsumer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(args, kwargs)
-        self.room_group_name = None
-
     async def connect(self):
-        self.room_group_name = f"video_{self.scope['user'].id}"
+        self.room_group_name = f"video_{self.scope['user_id']}"
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
@@ -35,6 +31,7 @@ class VideoConsumer(AsyncWebsocketConsumer):
                 case "ping":
                     await self.chat_ping_handler(text_data_json)
         except KeyError:
+            # TODO: send error message to user
             return
 
     async def chat_ping_handler(self, _data):
@@ -45,8 +42,7 @@ class VideoConsumer(AsyncWebsocketConsumer):
             f"video_{data['recipient']}",
             {
                 "type": "video_offer",
-                "caller_name": self.scope["user"].username,
-                "recipient": self.scope["user"].id,
+                "callerID": self.scope["user_id"],
                 "offer": data["offer"],
             },
         )
@@ -56,8 +52,7 @@ class VideoConsumer(AsyncWebsocketConsumer):
             text_data=json.dumps(
                 {
                     "type": "video_offer",
-                    "caller_name": data["caller_name"],
-                    "recipient": data["recipient"],
+                    "callerID": data["callerID"],
                     "offer": data["offer"],
                 },
             ),
