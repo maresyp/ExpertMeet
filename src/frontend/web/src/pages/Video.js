@@ -3,14 +3,11 @@ import { VideoWebSocket } from '../components/ws/VideoWebSocket';
 import React, { useEffect, useRef, useState } from 'react';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
-import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
-import Fab from '@mui/material/Fab';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
-import AuthContext from '../context/AuthContext';
 import { Badge, Button, ButtonGroup, IconButton, Tooltip } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
@@ -36,8 +33,10 @@ const Video = () => {
     };
 
     const servers = {
-        iceServers: [
-            { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }
+        'iceServers': [
+            {
+                urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302']
+            }
         ]
     };
 
@@ -46,8 +45,8 @@ const Video = () => {
     const [remoteStream, setRemoteStream] = useState(null);
     const [peerConnection, setPeerConnection] = useState(null);
 
-    const videoLocalRef = useRef(null);
-    const videoRemoteRef = useRef(null);
+    const videoLocalRef = useRef(localStream);
+    const videoRemoteRef = useRef(remoteStream);
 
     const callButtonStyle = videoState === connectionStatus.ACTIVE ? { backgroundColor: 'red' } : { backgroundColor: 'green' };
 
@@ -85,22 +84,99 @@ const Video = () => {
 
 
     const handleSocketMessage = async (data) => {
-
+        if (data.type === 'video_result') {
+            if (!peerConnection.currentRemoteDescription) {
+                await peerConnection.setRemoteDescription(data.answer)
+            }
+        } else if (data.type === 'new-ice-candidate') {
+            let candidate = new RTCIceCandidate(data.candidate);
+            await peerConnection.addIceCandidate(candidate);
+        }
     }
 
     useEffect(() => {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    if (videoLocalRef.current) {
-                        videoLocalRef.current.srcObject = stream;
-                    }
-                })
-                .catch(error => {
-                    console.error("Error accessing the camera: ", error);
-                });
+        const pc = createPeerConnection();
+        setPeerConnection(pc);
+
+        // Initialize local stream and add tracks to peer connection
+        async function initLocalStream() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                setLocalStream(stream);
+                videoLocalRef.current.srcObject = stream;
+                stream.getTracks().forEach(track => pc.addTrack(track, stream));
+            } catch (error) {
+                console.error("Error accessing media devices.", error);
+            }
         }
+
+        initLocalStream();
     }, []);
+
+    useEffect(() => {
+        if (peerConnection) {
+            videoMain();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [peerConnection]);
+
+    async function videoMain() {
+        console.log("videoMain");
+        if (location.state.action === "startCall") {
+            if (videoState === connectionStatus.INIT) {
+                try {
+                    sendJsonMessage({
+                        type: "video_offer",
+                        recipient: location.state.userID,
+                        offer: await createOffer()
+                    })
+                    console.log("Offer sent");
+                } catch (error) {
+                    console.error("Error in videoMain", error);
+                }
+            }
+        } else if (location.state.action === "acceptCall") {
+            const pc = peerConnection;
+            let rtcOffer = new RTCSessionDescription({
+                type: 'offer',
+                sdp: location.state.offer.sdp
+            })
+            await pc.setRemoteDescription(rtcOffer)
+
+            let answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+
+            sendJsonMessage({
+                type: 'video_answer',
+                recipient: location.state.userID,
+                answer: peerConnection.localDescription
+            })
+        }
+    }
+
+    const createOffer = async () => {
+        console.log("Creating offer...");
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        console.log("Local description set with offer.");
+
+        return new Promise((resolve, reject) => {
+            if (peerConnection.iceGatheringState === 'complete') {
+                console.log("ICE gathering complete.");
+                resolve(peerConnection.localDescription);
+            } else {
+                function checkState() {
+                    console.log("ICE gathering state:", peerConnection.iceGatheringState);
+                    if (peerConnection.iceGatheringState === 'complete') {
+                        console.log("ICE gathering complete.");
+                        peerConnection.removeEventListener('icegatheringstatechange', checkState);
+                        resolve(peerConnection.localDescription);
+                    }
+                }
+                peerConnection.addEventListener('icegatheringstatechange', checkState);
+            }
+        });
+    };
 
     const startScreenShare = async () => {
         try {
@@ -144,7 +220,7 @@ const Video = () => {
             event.streams[0].getTracks().forEach(track => remoteStream.addTrack(track));
         };
 
-        pc.onicecandidate = (event) => {
+        pc.onicecandidate = async (event) => {
             if (event.candidate) {
                 sendJsonMessage({
                     type: 'video_ice_candidate',
@@ -154,39 +230,8 @@ const Video = () => {
             }
         };
 
-        setPeerConnection(pc);
+        return pc;
     };
-
-    const createOffer = async () => {
-        createPeerConnection();
-
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-
-        return new Promise((resolve) => {
-            if (peerConnection.iceGatheringState === 'complete') {
-                resolve(peerConnection.localDescription);
-            } else {
-                peerConnection.addEventListener('icegatheringstatechange', function checkState() {
-                    if (peerConnection.iceGatheringState === 'complete') {
-                        peerConnection.removeEventListener('icegatheringstatechange', checkState);
-                        resolve(peerConnection.localDescription);
-                    }
-                });
-            }
-        });
-    };
-
-    const init = async () => {
-        if (location.state.action === "startCall" && videoState === connectionStatus.INIT) {
-            setVideoState(connectionStatus.CALLING);
-            sendJsonMessage({
-                type: "video_offer",
-                recipient: location.state.userID,
-                offer: await createOffer()
-            })
-        }
-    }
 
     return (
         <Container component="main" maxWidth="lg" sx={{ height: '700px' }}>
@@ -214,7 +259,9 @@ const Video = () => {
                     {/* Main Video */}
                     <Box
                         component="video"
+                        ref={videoRemoteRef}
                         autoPlay
+                        muted
                         sx={{
                             width: '100%',
                             height: '100%',

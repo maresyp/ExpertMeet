@@ -1,11 +1,13 @@
 import { VideoWebSocket } from "../ws/VideoWebSocket";
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+import { Avatar, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const VideoOverlay = () => {
     const { sendJsonMessage, lastJsonMessage, readyState } = VideoWebSocket();
     const [isCalling, setIsCalling] = useState(false);
     const [callStack, setCallStack] = useState([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (lastJsonMessage && lastJsonMessage.type === "video_offer") {
@@ -16,6 +18,7 @@ const VideoOverlay = () => {
 
     const handleAcceptCall = () => {
         setIsCalling(false);
+        navigate('/video', { state: { userID: lastJsonMessage.callerID, action: "acceptCall", offer: lastJsonMessage.offer } })
     };
 
     const handleDeclineCall = () => {
@@ -36,18 +39,21 @@ const VideoOverlay = () => {
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
         >
-            <DialogTitle id="alert-dialog-title">Incoming Call</DialogTitle>
-            <DialogContent>
+            <DialogTitle sx={{ textAlign: 'center' }} id="alert-dialog-title">Nadchodzące połączenie</DialogTitle>
+            <DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Avatar alt={'P'} src={`http://127.0.0.1:8080/api/profile/get_avatar_by_user/${callStack[callStack.length - 1]}`}
+                    sx={{ width: 75, height: 75, fontSize: '3rem', marginBottom: 5 }} // Adjust width, height, and fontSize as needed
+                />
                 <DialogContentText id="alert-dialog-description">
                     Someone is calling you. Would you like to accept the call?
                 </DialogContentText>
             </DialogContent>
-            <DialogActions>
-                <Button onClick={handleDeclineCall} color="primary">
-                    Decline
+            <DialogActions sx={{ justifyContent: 'center' }}>
+                <Button variant="contained" onClick={handleDeclineCall} color="error">
+                    Odrzuć
                 </Button>
-                <Button onClick={handleAcceptCall} color="primary" autoFocus>
-                    Accept
+                <Button variant="contained" onClick={handleAcceptCall} color="success" autoFocus>
+                    Zaakceptuj
                 </Button>
             </DialogActions>
         </Dialog>

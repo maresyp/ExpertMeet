@@ -22,7 +22,7 @@ class VideoConsumer(AsyncWebsocketConsumer):
                     await self.video_offer_handler(text_data_json)
                 case "video_answer":
                     await self.video_answer_handler(text_data_json)
-                case "new-ice-candidate":
+                case "video_ice_candidate":
                     await self.new_ice_candidate_handler(text_data_json)
                 case "end_call":
                     await self.end_call_handler(text_data_json)
@@ -83,8 +83,8 @@ class VideoConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             f"video_{data['recipient']}",
             {
-                "type": "new-ice-candidate",
-                "recipient": self.scope["user"].id,
+                "type": "new_ice_candidate",
+                "recipient": self.scope["user_id"],
                 "candidate": data["candidate"],
             },
         )
