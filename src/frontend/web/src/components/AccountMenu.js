@@ -92,7 +92,7 @@ export default function AccountMenu() {
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             >
                 <MenuItem onClick={handleProfile}>
-                    <Avatar /> Mój profil
+                    <Avatar src={`http://127.0.0.1:8080/api/profile/get_avatar/${user.profile_id}`} /> Mój profil
                 </MenuItem>
                 <MenuItem onClick={handleChat}>
                     <ListItemIcon>
