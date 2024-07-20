@@ -6,8 +6,7 @@ import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import ReviewSummary from '../components/ReviewSummary';
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Avatar, Divider, Typography } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Alert, Avatar, Divider, TextField, Typography } from '@mui/material';
 
 const HomePage = () => {
     useQueryClient()
@@ -27,10 +26,19 @@ const HomePage = () => {
         console.log('Box clicked');
     };
 
-
     if (error) {
         console.log(error);
     }
+
+    const [searchTerm, setSearchTerm] = React.useState('');
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
+    };
+
+    const filteredProfiles = data?.filter(profile => {
+        const fullName = `${profile?.username || ''}`.toLowerCase();
+        return fullName.toLowerCase().includes(searchTerm.toLowerCase());
+    });
 
     return (
         <Container component="main" maxWidth="lg">
@@ -44,11 +52,11 @@ const HomePage = () => {
                 }}
             >
                 {alert.open && <Alert severity={alert.severity}>{alert.message}</Alert>}
-                Featured profiles
+                <TextField id="search-bar" label="Wyszukaj..." variant="outlined" fullWidth sx={{ mb: 4 }} onChange={handleSearchChange} />
                 {isLoading ? (
                     <p>Loading</p>
                 ) : (
-                    Array.isArray(data) ? data.map((item, index) => (
+                        Array.isArray(filteredProfiles) ? filteredProfiles.map((item, index) => (
                         <Box mb={2} key={index}>
                             <Paper elevation={1}>
                                 <Box onClick={handleClick} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
