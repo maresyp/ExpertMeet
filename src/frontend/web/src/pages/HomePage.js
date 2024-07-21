@@ -7,6 +7,13 @@ import Paper from '@mui/material/Paper';
 import ReviewSummary from '../components/ReviewSummary';
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Avatar, Divider, TextField, Typography } from '@mui/material';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import ListItemText from '@mui/material/ListItemText';
+import Checkbox from '@mui/material/Checkbox';
 
 const HomePage = () => {
     useQueryClient()
@@ -20,6 +27,7 @@ const HomePage = () => {
                 }
                 return res.json()
             }),
+        keepPreviousData: true,
     })
 
     const handleClick = () => {
@@ -40,6 +48,23 @@ const HomePage = () => {
         return fullName.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
+    const [ordering, setOrdering] = React.useState('')
+    const handleChangeOrdering = (event) => {
+        setOrdering(event.target.value);
+    };
+
+    const [selectedCategories, setSelectedCategories] = React.useState([]);
+    const [availableCategories, setAvailableCategories] = React.useState(["IT", "Korepetycje", "chujowaniew dupe"]);
+    const handleChangeCategories = (event) => {
+        const {
+            target: { value },
+        } = event;
+        setSelectedCategories(
+            // On autofill we get a stringified value.
+            typeof value === 'string' ? value.split(',') : value,
+        );
+    };
+
     return (
         <Container component="main" maxWidth="lg">
             <CssBaseline />
@@ -52,7 +77,43 @@ const HomePage = () => {
                 }}
             >
                 {alert.open && <Alert severity={alert.severity}>{alert.message}</Alert>}
-                <TextField id="search-bar" label="Wyszukaj..." variant="outlined" fullWidth sx={{ mb: 4 }} onChange={handleSearchChange} />
+                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, mb: 5 }}>
+                    <TextField id="search-bar" label="Wyszukaj..." variant="outlined" fullWidth onChange={handleSearchChange} />
+                    <FormControl sx={{ m: 1, minWidth: 220 }} >
+                        <InputLabel id="ordering">Sortowanie</InputLabel>
+                        <Select
+                            labelId="demo-select-small-label"
+                            id="select-ordering"
+                            value={ordering}
+                            label="Age"
+                            onChange={handleChangeOrdering}
+                        >
+                            <MenuItem value={10}>Imię i nazwisko (A- Z)</MenuItem>
+                            <MenuItem value={20}>Imię i nazwisko (Z- A)</MenuItem>
+                            <MenuItem value={30}>Oceny (rosnąco)</MenuItem>
+                            <MenuItem value={40}>Oceny (malejąco)</MenuItem>
+                        </Select>
+                    </FormControl>
+                    <FormControl sx={{ m: 1, width: 300 }}>
+                        <InputLabel id="demo-multiple-checkbox-label">Kategoria</InputLabel>
+                        <Select
+                            labelId="demo-multiple-checkbox-label"
+                            id="demo-multiple-checkbox"
+                            multiple
+                            value={selectedCategories}
+                            onChange={handleChangeCategories}
+                            input={<OutlinedInput label="Tag" />}
+                            renderValue={(selected) => selected.join(', ')}
+                        >
+                            {availableCategories.map((category) => (
+                                <MenuItem key={category} value={category}>
+                                    <Checkbox checked={selectedCategories.indexOf(category) > -1} />
+                                    <ListItemText primary={category} />
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Box>
                 {isLoading ? (
                     <p>Loading</p>
                 ) : (
