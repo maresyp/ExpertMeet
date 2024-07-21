@@ -79,22 +79,7 @@ const HomePage = () => {
                 {alert.open && <Alert severity={alert.severity}>{alert.message}</Alert>}
                 <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, mb: 5 }}>
                     <TextField id="search-bar" label="Wyszukaj..." variant="outlined" fullWidth onChange={handleSearchChange} />
-                    <FormControl sx={{ m: 1, minWidth: 220 }} >
-                        <InputLabel id="ordering">Sortowanie</InputLabel>
-                        <Select
-                            labelId="demo-select-small-label"
-                            id="select-ordering"
-                            value={ordering}
-                            label="Age"
-                            onChange={handleChangeOrdering}
-                        >
-                            <MenuItem value={10}>Imię i nazwisko (A- Z)</MenuItem>
-                            <MenuItem value={20}>Imię i nazwisko (Z- A)</MenuItem>
-                            <MenuItem value={30}>Oceny (rosnąco)</MenuItem>
-                            <MenuItem value={40}>Oceny (malejąco)</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <FormControl sx={{ m: 1, width: 300 }}>
+                    <FormControl sx={{ m: 1, minWidth: 260 }}>
                         <InputLabel id="demo-multiple-checkbox-label">Kategoria</InputLabel>
                         <Select
                             labelId="demo-multiple-checkbox-label"
@@ -102,7 +87,7 @@ const HomePage = () => {
                             multiple
                             value={selectedCategories}
                             onChange={handleChangeCategories}
-                            input={<OutlinedInput label="Tag" />}
+                            input={<OutlinedInput label="Kategoria" />}
                             renderValue={(selected) => selected.join(', ')}
                         >
                             {availableCategories.map((category) => (
@@ -113,12 +98,27 @@ const HomePage = () => {
                             ))}
                         </Select>
                     </FormControl>
+                    <FormControl sx={{ m: 1, minWidth: 220 }} >
+                        <InputLabel id="ordering">Sortowanie</InputLabel>
+                        <Select
+                            labelId="demo-select-small-label"
+                            id="select-ordering"
+                            value={ordering}
+                            label="Sortowanie"
+                            onChange={handleChangeOrdering}
+                        >
+                            <MenuItem value={"profile__username"}>Imię i nazwisko (A- Z)</MenuItem>
+                            <MenuItem value={"-profile__username"}>Imię i nazwisko (Z- A)</MenuItem>
+                            <MenuItem value={"profile__reviewsummary__ratings_mean"}>Oceny (rosnąco)</MenuItem>
+                            <MenuItem value={"-profile__reviewsummary__ratings_mean"}>Oceny (malejąco)</MenuItem>
+                        </Select>
+                    </FormControl>
                 </Box>
                 {isLoading ? (
                     <p>Loading</p>
                 ) : (
                         Array.isArray(filteredProfiles) ? filteredProfiles.map((item, index) => (
-                        <Box mb={2} key={index}>
+                            <Box mb={4} key={index}>
                             <Paper elevation={1}>
                                 <Box onClick={handleClick} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <Avatar alt="User" src={`http://127.0.0.1:8080/api/profile/get_avatar/${item.id}`} />
