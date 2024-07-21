@@ -9,6 +9,7 @@ from pathlib import Path
 
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
+from django_filters.utils import translate_validation
 from profiles.models import Category, Profile, Review, ReviewSummary
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -16,6 +17,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from utils.permissions.is_resource_owner import IsResourceOwner
 
+from .filters import ProfileFilter
+from .pagination import StandardResultsSetPagination
 from .serializers import CategorySerializer, ProfileSerializer, ReviewDeserializer, ReviewSerializer, ReviewSummarySerializer
 
 
@@ -55,10 +58,22 @@ def get_profile_uuid(_request, user_id: int):
 
 
 @api_view(["GET"])
-def get_profile_feed(_request) -> Response:
-    profiles = Profile.objects.all()
+def get_profile_feed(request) -> Response:
+    queryset = Profile.objects.all()
+    paginator = StandardResultsSetPagination()
+    paginator.page_size = 20
 
-    serializer = ProfileSerializer(profiles, many=True)
+    filter_set = ProfileFilter(request.GET, queryset=queryset)
+    if not filter_set.is_valid():
+        raise translate_validation(filter_set.errors)
+
+    paginated_qs = paginator.paginate_queryset(filter_set.qs, request)
+
+    ordering = request.GET.get("ordering")
+    if ordering:
+        paginated_qs = paginated_qs.order_by(ordering)
+
+    serializer = ProfileSerializer(paginated_qs, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
