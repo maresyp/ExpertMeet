@@ -7,6 +7,8 @@ if TYPE_CHECKING:
 
 from pathlib import Path
 
+from django.db.models import F
+from django.db.models.functions import Lower, Substr
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.utils import translate_validation
@@ -67,11 +69,14 @@ def get_profile_feed(request) -> Response:
     if not filter_set.is_valid():
         raise translate_validation(filter_set.errors)
 
-    paginated_qs = paginator.paginate_queryset(filter_set.qs, request)
-
+    queryset = filter_set.qs
     ordering = request.GET.get("ordering")
     if ordering:
-        paginated_qs = paginated_qs.order_by(ordering)
+        if ordering in ("last_name", "-last_name"):
+            queryset = queryset.annotate(last_name=Lower(Substr(F("user__last_name"), 1, 1)))
+        queryset = queryset.order_by(ordering)
+
+    paginated_qs = paginator.paginate_queryset(queryset, request)
 
     serializer = ProfileSerializer(paginated_qs, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)

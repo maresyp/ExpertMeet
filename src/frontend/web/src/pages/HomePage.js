@@ -14,21 +14,76 @@ import Select from '@mui/material/Select';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import ListItemText from '@mui/material/ListItemText';
 import Checkbox from '@mui/material/Checkbox';
+import { useDebounce } from 'use-debounce'
 
 const HomePage = () => {
     useQueryClient()
 
-    const { isLoading, data, error } = useQuery({
-        queryKey: ['Profile'],
+    const [searchTerm, setSearchTerm] = React.useState('');
+    const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
+    const [ordering, setOrdering] = React.useState('')
+    const [selectedCategories, setSelectedCategories] = React.useState([]);
+
+    const { isLoading: categoriesLoading, data: availableCategories, error: categoriesError } = useQuery({
+        queryKey: ['Categories'],
         queryFn: ({ signal }) =>
-            fetch("http://127.0.0.1:8080/api/profile/feed", { signal }).then((res) => {
+            fetch("http://127.0.0.1:8080/api/profile/get_categories", {
+                signal,
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }).then((res) => {
                 if (!res.ok) {
                     throw new Error('Failed to fetch')
                 }
                 return res.json()
             }),
-        keepPreviousData: true,
     })
+
+    const [page, setPage] = React.useState(1);
+    const fetchProfiles = async ({ queryKey }) => {
+        // eslint-disable-next-line no-unused-vars
+        const [_key, page, debouncedSearchTerm, selectedCategories, ordering] = queryKey;
+
+        // Create URLSearchParams object
+        const params = new URLSearchParams();
+        params.append('page', page);
+        params.append('username', debouncedSearchTerm);
+
+        // Add each category as a separate parameter
+        if (Array.isArray(selectedCategories)) {
+            selectedCategories.forEach(category => params.append('category', category));
+        }
+
+        if (ordering) {
+            params.append('ordering', ordering);
+        }
+
+        const response = await fetch(`http://127.0.0.1:8080/api/profile/feed?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('There are no more messages to download.');
+            }
+            throw new Error('Failed to fetch');
+        }
+
+        const data = await response.json();
+
+        return data;
+    };
+
+    const { isLoading, data, error } = useQuery({
+        queryKey: ['ChatMessages', page, debouncedSearchTerm, selectedCategories, ordering],
+        queryFn: fetchProfiles,
+        keepPreviousData: true,
+    });
 
     const handleClick = () => {
         console.log('Box clicked');
@@ -38,7 +93,6 @@ const HomePage = () => {
         console.log(error);
     }
 
-    const [searchTerm, setSearchTerm] = React.useState('');
     const handleSearchChange = (event) => {
         setSearchTerm(event.target.value);
     };
@@ -48,13 +102,10 @@ const HomePage = () => {
         return fullName.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
-    const [ordering, setOrdering] = React.useState('')
     const handleChangeOrdering = (event) => {
         setOrdering(event.target.value);
     };
 
-    const [selectedCategories, setSelectedCategories] = React.useState([]);
-    const [availableCategories, setAvailableCategories] = React.useState(["IT", "Korepetycje", "chujowaniew dupe"]);
     const handleChangeCategories = (event) => {
         const {
             target: { value },
@@ -80,20 +131,24 @@ const HomePage = () => {
                 <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, mb: 5 }}>
                     <TextField id="search-bar" label="Wyszukaj..." variant="outlined" fullWidth onChange={handleSearchChange} />
                     <FormControl sx={{ m: 1, minWidth: 260 }}>
-                        <InputLabel id="demo-multiple-checkbox-label">Kategoria</InputLabel>
+                        <InputLabel id="category-checkbox-label">Kategoria</InputLabel>
                         <Select
-                            labelId="demo-multiple-checkbox-label"
-                            id="demo-multiple-checkbox"
+                            labelId="category-multiple-checkbox-label"
+                            id="category-multiple-checkbox"
                             multiple
                             value={selectedCategories}
                             onChange={handleChangeCategories}
                             input={<OutlinedInput label="Kategoria" />}
-                            renderValue={(selected) => selected.join(', ')}
+                            renderValue={(selected) =>
+                                selected.map((selectedId) =>
+                                    availableCategories.find((category) => category.id === selectedId)?.name || ''
+                                ).join(', ')
+                            }
                         >
-                            {availableCategories.map((category) => (
-                                <MenuItem key={category} value={category}>
-                                    <Checkbox checked={selectedCategories.indexOf(category) > -1} />
-                                    <ListItemText primary={category} />
+                            {availableCategories?.map((category) => (
+                                <MenuItem key={category.id} value={category.id}>
+                                    <Checkbox checked={selectedCategories.indexOf(category.id) > -1} />
+                                    <ListItemText primary={category.name} />
                                 </MenuItem>
                             ))}
                         </Select>
@@ -107,10 +162,10 @@ const HomePage = () => {
                             label="Sortowanie"
                             onChange={handleChangeOrdering}
                         >
-                            <MenuItem value={"profile__username"}>Imię i nazwisko (A- Z)</MenuItem>
-                            <MenuItem value={"-profile__username"}>Imię i nazwisko (Z- A)</MenuItem>
-                            <MenuItem value={"profile__reviewsummary__ratings_mean"}>Oceny (rosnąco)</MenuItem>
-                            <MenuItem value={"-profile__reviewsummary__ratings_mean"}>Oceny (malejąco)</MenuItem>
+                            <MenuItem value={"last_name"}>Nazwisko (A- Z)</MenuItem>
+                            <MenuItem value={"-last_name"}>Nazwisko (Z- A)</MenuItem>
+                            <MenuItem value={"reviewsummary__ratings_mean"}>Oceny (rosnąco)</MenuItem>
+                            <MenuItem value={"-reviewsummary__ratings_mean"}>Oceny (malejąco)</MenuItem>
                         </Select>
                     </FormControl>
                 </Box>
