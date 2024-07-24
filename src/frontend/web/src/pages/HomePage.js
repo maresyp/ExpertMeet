@@ -24,7 +24,9 @@ const HomePage = () => {
     const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
     const [ordering, setOrdering] = React.useState('')
     const [selectedCategories, setSelectedCategories] = React.useState([]);
+    const [noMorePages, setNoMorePages] = React.useState(false);
 
+    // eslint-disable-next-line no-unused-vars
     const { isLoading: categoriesLoading, data: availableCategories, error: categoriesError } = useQuery({
         queryKey: ['Categories'],
         queryFn: ({ signal }) =>
@@ -69,13 +71,13 @@ const HomePage = () => {
 
         if (!response.ok) {
             if (response.status === 404) {
+                setNoMorePages(true);
                 throw new Error('There are no more messages to download.');
             }
             throw new Error('Failed to fetch');
         }
 
         const data = await response.json();
-
         return data;
     };
 
@@ -83,15 +85,18 @@ const HomePage = () => {
         data,
         error,
         fetchNextPage,
+        // eslint-disable-next-line no-unused-vars
         hasNextPage,
+        // eslint-disable-next-line no-unused-vars
         isFetching,
         isFetchingNextPage,
+        // eslint-disable-next-line no-unused-vars
         status,
         refetch,
     } = useInfiniteQuery({
         queryKey: ['Profiles', debouncedSearchTerm, selectedCategories, ordering],
         queryFn: ({ pageParam = 1 }) => fetchProfiles({ queryKey: ['Profiles', pageParam, debouncedSearchTerm, selectedCategories, ordering] }),
-        getNextPageParam: (lastPage, pages) => lastPage.length ? pages.length + 1 : undefined,
+        getNextPageParam: (lastPage, pages) => noMorePages ? undefined : pages.length + 1
     });
 
     const handleClick = () => {
@@ -102,12 +107,19 @@ const HomePage = () => {
         console.log(error);
     }
 
+    const resetQuery = React.useCallback(() => {
+        refetch({ refetchPage: (page, index) => index === 0 });
+        setNoMorePages(false);
+    }, [refetch]);
+
     const handleSearchChange = (event) => {
         setSearchTerm(event.target.value);
+        resetQuery();
     };
 
     const handleChangeOrdering = (event) => {
         setOrdering(event.target.value);
+        resetQuery();
     };
 
     const handleChangeCategories = (event) => {
@@ -118,28 +130,28 @@ const HomePage = () => {
             // On autofill we get a stringified value.
             typeof value === 'string' ? value.split(',') : value,
         );
+        resetQuery();
     };
 
-    // const handleScroll = () => {
-    //     const scrollPosition = window.scrollY + window.innerHeight;
-    //     const totalHeight = document.documentElement.scrollHeight;
-    //     const buffer = 50;
+    const handleScroll = React.useCallback(() => {
+        const scrollPosition = window.scrollY + window.innerHeight;
+        const totalHeight = document.documentElement.scrollHeight;
+        const buffer = 50;
 
-    //     if ((scrollPosition + buffer >= totalHeight) && !profilesLoading && hasMore) {
-    //         console.log('Reached the bottom');
-    //         setPage((prev) => prev + 1)
-    //     }
-    // };
+        if ((scrollPosition + buffer >= totalHeight)) {
+            fetchNextPage();
+        }
+    }, [fetchNextPage]);
 
-    // React.useEffect(() => {
-    //     // Add scroll event listener to the window when the component mounts
-    //     window.addEventListener('scroll', handleScroll);
+    React.useEffect(() => {
+        // Add scroll event listener to the window when the component mounts
+        window.addEventListener('scroll', handleScroll);
 
-    //     // Remove the scroll event listener when the component unmounts
-    //     return () => {
-    //         window.removeEventListener('scroll', handleScroll);
-    //     };
-    // }, []);
+        // Remove the scroll event listener when the component unmounts
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [handleScroll]);
 
     return (
         <Container component="main" maxWidth="lg">
