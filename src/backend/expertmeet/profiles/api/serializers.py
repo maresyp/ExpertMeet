@@ -7,13 +7,17 @@ from rest_framework.serializers import CharField, FloatField, ModelSerializer, S
 
 class ProfileSerializer(ModelSerializer):
     username = SerializerMethodField()
+    category = SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields: ClassVar = ["id", "username", "bio"]
+        fields: ClassVar = ["id", "username", "bio", "category", "description"]
 
     def get_username(self, obj) -> str:
         return f"{obj.user.first_name} {obj.user.last_name}"
+
+    def get_category(self, obj) -> str:
+        return str(obj.category.name) if obj.category else None
 
 
 class ReviewSerializer(ModelSerializer):

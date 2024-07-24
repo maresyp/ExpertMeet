@@ -23,6 +23,8 @@ const HomePage = () => {
     const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
     const [ordering, setOrdering] = React.useState('')
     const [selectedCategories, setSelectedCategories] = React.useState([]);
+    const profilesEndRef = React.useRef(null);
+    const [page, setPage] = React.useState(1);
 
     const { isLoading: categoriesLoading, data: availableCategories, error: categoriesError } = useQuery({
         queryKey: ['Categories'],
@@ -41,7 +43,6 @@ const HomePage = () => {
             }),
     })
 
-    const [page, setPage] = React.useState(1);
     const fetchProfiles = async ({ queryKey }) => {
         // eslint-disable-next-line no-unused-vars
         const [_key, page, debouncedSearchTerm, selectedCategories, ordering] = queryKey;
@@ -97,6 +98,23 @@ const HomePage = () => {
         setSearchTerm(event.target.value);
     };
 
+    // React.useEffect(() => {
+    //     if (profilesDataLoaded) {
+    //         setLoadedProfiles((prevProfiles) => {
+    //             const newProfiles = profilesDataLoaded.filter(
+    //                 (newData) => !prevProfiles.some((prof) => prof.id === newData.id)
+    //             );
+    //             return [...prevProfiles, ...newProfiles];
+    //         })
+    //     }
+    // }, [profilesDataLoaded])
+
+    // // Reset page to 1 when search parameters are changed
+    // React.useEffect(() => {
+    //     setPage(1);
+    //     setHasMore(true);
+    // }, [debouncedSearchTerm, selectedCategories, ordering])
+
     const filteredProfiles = data?.filter(profile => {
         const fullName = `${profile?.username || ''}`.toLowerCase();
         return fullName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -115,6 +133,27 @@ const HomePage = () => {
             typeof value === 'string' ? value.split(',') : value,
         );
     };
+
+    // const handleScroll = () => {
+    //     const scrollPosition = window.scrollY + window.innerHeight;
+    //     const totalHeight = document.documentElement.scrollHeight;
+    //     const buffer = 50;
+
+    //     if ((scrollPosition + buffer >= totalHeight) && !profilesLoading && hasMore) {
+    //         console.log('Reached the bottom');
+    //         setPage((prev) => prev + 1)
+    //     }
+    // };
+
+    // React.useEffect(() => {
+    //     // Add scroll event listener to the window when the component mounts
+    //     window.addEventListener('scroll', handleScroll);
+
+    //     // Remove the scroll event listener when the component unmounts
+    //     return () => {
+    //         window.removeEventListener('scroll', handleScroll);
+    //     };
+    // }, []);
 
     return (
         <Container component="main" maxWidth="lg">
@@ -169,11 +208,8 @@ const HomePage = () => {
                         </Select>
                     </FormControl>
                 </Box>
-                {isLoading ? (
-                    <p>Loading</p>
-                ) : (
-                        Array.isArray(filteredProfiles) ? filteredProfiles.map((item, index) => (
-                            <Box mb={4} key={index}>
+                {Array.isArray(filteredProfiles) ? filteredProfiles.map((item, index) => (
+                    <Box mb={4} key={index}>
                             <Paper elevation={1}>
                                 <Box onClick={handleClick} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <Avatar alt="User" src={`http://127.0.0.1:8080/api/profile/get_avatar/${item.id}`} />
@@ -182,17 +218,22 @@ const HomePage = () => {
                                 <Divider flexItem />
                                 <div key={index}>
                                     <Typography variant='h6'>
-                                        Informacje:
-                                    </Typography>
-                                    {item.bio}
-                                    <br />
-                                    <br />
+                                    Kategoria: {item.category}
+                                </Typography>
+                                <Typography variant='h6'>
+                                    Informacje:
+                                </Typography>
+                                {item.bio}
+                                <br />
+                                {item.description}
+                                <br />
+                                <br />
                                     <ReviewSummary profile_id={item.id} />
                                 </div>
                             </Paper>
                         </Box>
-                    )) : <p></p>
-                )}
+                )) : <p>Ładowanie ...</p>}
+                <div ref={profilesEndRef} />
             </Box>
         </Container>
     )
