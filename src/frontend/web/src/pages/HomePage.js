@@ -5,7 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import ReviewSummary from '../components/ReviewSummary';
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { Alert, Avatar, Divider, TextField, Typography } from '@mui/material';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -15,6 +15,7 @@ import OutlinedInput from '@mui/material/OutlinedInput';
 import ListItemText from '@mui/material/ListItemText';
 import Checkbox from '@mui/material/Checkbox';
 import { useDebounce } from 'use-debounce'
+import { CircularProgress } from '@mui/material';
 
 const HomePage = () => {
     useQueryClient()
@@ -23,8 +24,6 @@ const HomePage = () => {
     const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
     const [ordering, setOrdering] = React.useState('')
     const [selectedCategories, setSelectedCategories] = React.useState([]);
-    const profilesEndRef = React.useRef(null);
-    const [page, setPage] = React.useState(1);
 
     const { isLoading: categoriesLoading, data: availableCategories, error: categoriesError } = useQuery({
         queryKey: ['Categories'],
@@ -80,10 +79,19 @@ const HomePage = () => {
         return data;
     };
 
-    const { isLoading, data, error } = useQuery({
-        queryKey: ['ChatMessages', page, debouncedSearchTerm, selectedCategories, ordering],
-        queryFn: fetchProfiles,
-        keepPreviousData: true,
+    const {
+        data,
+        error,
+        fetchNextPage,
+        hasNextPage,
+        isFetching,
+        isFetchingNextPage,
+        status,
+        refetch,
+    } = useInfiniteQuery({
+        queryKey: ['Profiles', debouncedSearchTerm, selectedCategories, ordering],
+        queryFn: ({ pageParam = 1 }) => fetchProfiles({ queryKey: ['Profiles', pageParam, debouncedSearchTerm, selectedCategories, ordering] }),
+        getNextPageParam: (lastPage, pages) => lastPage.length ? pages.length + 1 : undefined,
     });
 
     const handleClick = () => {
@@ -97,28 +105,6 @@ const HomePage = () => {
     const handleSearchChange = (event) => {
         setSearchTerm(event.target.value);
     };
-
-    // React.useEffect(() => {
-    //     if (profilesDataLoaded) {
-    //         setLoadedProfiles((prevProfiles) => {
-    //             const newProfiles = profilesDataLoaded.filter(
-    //                 (newData) => !prevProfiles.some((prof) => prof.id === newData.id)
-    //             );
-    //             return [...prevProfiles, ...newProfiles];
-    //         })
-    //     }
-    // }, [profilesDataLoaded])
-
-    // // Reset page to 1 when search parameters are changed
-    // React.useEffect(() => {
-    //     setPage(1);
-    //     setHasMore(true);
-    // }, [debouncedSearchTerm, selectedCategories, ordering])
-
-    const filteredProfiles = data?.filter(profile => {
-        const fullName = `${profile?.username || ''}`.toLowerCase();
-        return fullName.toLowerCase().includes(searchTerm.toLowerCase());
-    });
 
     const handleChangeOrdering = (event) => {
         setOrdering(event.target.value);
@@ -208,8 +194,13 @@ const HomePage = () => {
                         </Select>
                     </FormControl>
                 </Box>
-                {Array.isArray(filteredProfiles) ? filteredProfiles.map((item, index) => (
-                    <Box mb={4} key={index}>
+                {data?.pages.map((group, i) => (
+                    <React.Fragment key={i}>
+                        {group.filter(profile => {
+                            const fullName = `${profile?.username || ''}`.toLowerCase();
+                            return fullName.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+                        }).map((item, index) => (
+                            <Box mb={4} key={index}>
                             <Paper elevation={1}>
                                 <Box onClick={handleClick} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <Avatar alt="User" src={`http://127.0.0.1:8080/api/profile/get_avatar/${item.id}`} />
@@ -232,8 +223,14 @@ const HomePage = () => {
                                 </div>
                             </Paper>
                         </Box>
-                )) : <p>Ładowanie ...</p>}
-                <div ref={profilesEndRef} />
+                        ))}
+                    </React.Fragment>))}
+
+                {isFetchingNextPage && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                        <CircularProgress />
+                    </Box>
+                )}
             </Box>
         </Container>
     )
