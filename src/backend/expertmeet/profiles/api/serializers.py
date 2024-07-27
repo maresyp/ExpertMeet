@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import ClassVar
 
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -16,7 +18,7 @@ class ProfileSerializer(ModelSerializer):
     def get_username(self, obj) -> str:
         return f"{obj.user.first_name} {obj.user.last_name}"
 
-    def get_category(self, obj) -> str:
+    def get_category(self, obj) -> str | None:
         return str(obj.category.name) if obj.category else None
 
 
