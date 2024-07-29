@@ -124,13 +124,13 @@ const MyProfile = () => {
                                     <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
                                     <Tab label="informacje" {...a11yProps(0)} />
                                     <Tab label="harmonogram" {...a11yProps(1)} />
-                                    <Tab label="Item Three" {...a11yProps(2)} />
+                                    <Tab label="recenzje" {...a11yProps(2)} />
                                 </Tabs>
                             </Box>
                         </Box>
                         <Box sx={{ overflow: 'auto', flex: 1 }}>
                             <CustomTabPanel value={value} index={0}>
-                                <ProfileUpdate />
+                                <ProfileUpdate profileData={data} />
                             </CustomTabPanel>
                             <CustomTabPanel value={value} index={1}>
                                 Item Two
