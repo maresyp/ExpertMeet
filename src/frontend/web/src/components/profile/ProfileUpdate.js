@@ -96,7 +96,7 @@ function ProfileUpdate({ profileData, onProfileUpdateSuccess }) {
                         onChange={(event) => setCategory(event.target.value)}
                         input={<OutlinedInput label="Kategoria" />}
                         renderValue={(selected) =>
-                            availableCategories.find((category) => category.name === selected)?.name || ''
+                            availableCategories?.find((category) => category.name === selected)?.name || ''
                         }
                     >
                         {availableCategories?.map((cat) => (
