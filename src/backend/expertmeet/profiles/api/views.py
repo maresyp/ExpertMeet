@@ -7,6 +7,10 @@ if TYPE_CHECKING:
 
 from pathlib import Path
 
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import (
+    ValidationError,
+)
 from django.db.models import F
 from django.db.models.functions import Lower, Substr
 from django.http import FileResponse
@@ -21,7 +25,15 @@ from utils.permissions.is_resource_owner import IsResourceOwner
 
 from .filters import ProfileFilter
 from .pagination import StandardResultsSetPagination
-from .serializers import CategorySerializer, ProfileDeserializer, ProfileSerializer, ReviewDeserializer, ReviewSerializer, ReviewSummarySerializer
+from .serializers import (
+    CategorySerializer,
+    PasswordChangeDeserializer,
+    ProfileDeserializer,
+    ProfileSerializer,
+    ReviewDeserializer,
+    ReviewSerializer,
+    ReviewSummarySerializer,
+)
 
 
 @api_view(["POST"])
@@ -47,6 +59,29 @@ def update_profile(request):
 
     profile.save()
     return Response(data={"ok": 200}, status=status.HTTP_200_OK)
+
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    deserializer = PasswordChangeDeserializer(data=request.data)
+    if not deserializer.is_valid():
+        return Response(deserializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    user = request.user
+    if not user.check_password(deserializer.validated_data["old_password"]):
+        return Response({"error": "Old password is not correct"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if deserializer.validated_data["new_password1"] != deserializer.validated_data["new_password2"]:
+        return Response({"error": "New passwords don't match"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        validate_password(deserializer.validated_data["new_password1"], user)
+        user.set_password(deserializer.validated_data["new_password1"])
+        user.save()
+    except ValidationError as e:
+        return Response({"error": list(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({"message": "Password updated successfully"}, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])

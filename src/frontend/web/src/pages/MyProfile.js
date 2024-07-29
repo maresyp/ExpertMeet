@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
 import PropTypes from 'prop-types';
 import ProfileUpdate from '../components/profile/ProfileUpdate';
+import ProfileChangePassword from '../components/profile/ProfileChangePassword';
 
 function CustomTabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -129,6 +130,8 @@ const MyProfile = () => {
                                     <Tab label="informacje" {...a11yProps(0)} />
                                     <Tab label="harmonogram" {...a11yProps(1)} />
                                     <Tab label="recenzje" {...a11yProps(2)} />
+                                    <Tab label="historia" {...a11yProps(3)} />
+                                    <Tab label="ustawienia" {...a11yProps(4)} />
                                 </Tabs>
                             </Box>
                         </Box>
@@ -141,6 +144,12 @@ const MyProfile = () => {
                             </CustomTabPanel>
                             <CustomTabPanel value={value} index={2}>
                                 Item Three
+                            </CustomTabPanel>
+                            <CustomTabPanel value={value} index={3}>
+                                Item Four
+                            </CustomTabPanel>
+                            <CustomTabPanel value={value} index={4}>
+                                <ProfileChangePassword />
                             </CustomTabPanel>
                         </Box>
                         <Grid container style={{ padding: '20px' }}></Grid>

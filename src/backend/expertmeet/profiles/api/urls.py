@@ -5,6 +5,7 @@ from . import views
 urlpatterns = [
     path("profile/", views.get_profile, name="profile"),
     path("profile/update", views.update_profile, name="update_profile"),
+    path("profile/change_password", views.change_password, name="change_password"),
     #
     path("profile/feed", views.get_profile_feed, name="profile feed"),
     path("profile/reviews/feed/<uuid:profile_id>", views.get_reviews_feed, name="reviews feed"),

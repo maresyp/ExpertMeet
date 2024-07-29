@@ -26,6 +26,11 @@ class ProfileDeserializer(Serializer):
     bio = CharField(max_length=256)
     description = CharField(max_length=1028)
 
+class PasswordChangeDeserializer(Serializer):
+    old_password = CharField(max_length=128)
+    new_password1 = CharField(max_length=128)
+    new_password2 = CharField(max_length=128)
+
 
 class ReviewSerializer(ModelSerializer):
     class Meta:
