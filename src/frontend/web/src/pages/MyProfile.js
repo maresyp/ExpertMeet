@@ -14,6 +14,7 @@ import Avatar from '@mui/material/Avatar';
 import PropTypes from 'prop-types';
 import ProfileUpdate from '../components/profile/ProfileUpdate';
 import ProfileChangePassword from '../components/profile/ProfileChangePassword';
+import ProfileReviews from '../components/profile/ProfileReviews';
 
 function CustomTabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -143,7 +144,7 @@ const MyProfile = () => {
                                 Item Two
                             </CustomTabPanel>
                             <CustomTabPanel value={value} index={2}>
-                                Item Three
+                                <ProfileReviews profileData={data} />
                             </CustomTabPanel>
                             <CustomTabPanel value={value} index={3}>
                                 Item Four

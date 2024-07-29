@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import ClassVar
+from uuid import UUID
 
 from django.core.validators import MaxValueValidator, MinValueValidator
 from profiles.models import Category, Profile, Review, ReviewSummary
@@ -36,6 +37,15 @@ class ReviewSerializer(ModelSerializer):
     class Meta:
         model = Review
         fields = "__all__"
+
+    author_profile_id = SerializerMethodField()
+    author_profile_name = SerializerMethodField()
+
+    def get_author_profile_id(self, obj) -> UUID:
+        return obj.author.profile.id
+
+    def get_author_profile_name(self, obj) -> str:
+        return f"{obj.author.first_name} {obj.author.last_name}"
 
 
 class ReviewSummarySerializer(ModelSerializer):
