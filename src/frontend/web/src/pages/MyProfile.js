@@ -52,7 +52,7 @@ const MyProfile = () => {
     };
 
     useQueryClient()
-    const { isLoading, data, error } = useQuery({
+    const { isLoading, data, error, refetch } = useQuery({
         queryKey: ['Profile'],
         queryFn: ({ signal }) =>
             fetch("http://127.0.0.1:8080/api/profile/", {
@@ -79,6 +79,10 @@ const MyProfile = () => {
             <p>Loading...</p>
         )
     }
+
+    const handleProfileUpdateSuccess = () => {
+        refetch();
+    };
 
     return (
         <Container component="main" maxWidth="lg" sx={{ height: '700px' }}>
@@ -113,7 +117,7 @@ const MyProfile = () => {
                                 sx={{ width: 100, height: 100 }}
                             />
                             <Typography variant="h6" style={{ paddingTop: '15px' }}>
-                                {data.username}
+                                {data?.username}
                             </Typography>
                         </Grid>
 
@@ -130,7 +134,7 @@ const MyProfile = () => {
                         </Box>
                         <Box sx={{ overflow: 'auto', flex: 1 }}>
                             <CustomTabPanel value={value} index={0}>
-                                <ProfileUpdate profileData={data} />
+                                <ProfileUpdate profileData={data} onProfileUpdateSuccess={handleProfileUpdateSuccess} />
                             </CustomTabPanel>
                             <CustomTabPanel value={value} index={1}>
                                 Item Two

@@ -21,7 +21,7 @@ from utils.permissions.is_resource_owner import IsResourceOwner
 
 from .filters import ProfileFilter
 from .pagination import StandardResultsSetPagination
-from .serializers import CategorySerializer, ProfileSerializer, ReviewDeserializer, ReviewSerializer, ReviewSummarySerializer
+from .serializers import CategorySerializer, ProfileDeserializer, ProfileSerializer, ReviewDeserializer, ReviewSerializer, ReviewSummarySerializer
 
 
 @api_view(["POST"])
@@ -31,6 +31,22 @@ def get_profile(request):
 
     serializer = ProfileSerializer(profile)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def update_profile(request):
+    deserializer = ProfileDeserializer(data=request.data)
+    if not deserializer.is_valid():
+        return Response(deserializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    profile = get_object_or_404(Profile, user=request.user)
+
+    profile.category = Category(pk=deserializer.validated_data["category"])
+    profile.bio = deserializer.validated_data["bio"]
+    profile.description = deserializer.validated_data["description"]
+
+    profile.save()
+    return Response(data={"ok": 200}, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
@@ -150,20 +166,6 @@ def get_review_summary(_request, profile_id: UUID) -> Response:
 
     serializer = ReviewSummarySerializer(review_summary)
     return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def assign_profile_category(_request) -> Response:
-    msg: str = "TODO: implement assign_profile_category"
-    raise NotImplementedError(msg)
-
-
-@api_view(["DELETE"])
-@permission_classes([IsAuthenticated])
-def remove_profile_category(_request) -> Response:
-    msg: str = "TODO: implement remove_profile_category"
-    raise NotImplementedError(msg)
 
 
 @api_view(["GET"])

@@ -21,6 +21,11 @@ class ProfileSerializer(ModelSerializer):
     def get_category(self, obj) -> str | None:
         return str(obj.category.name) if obj.category else None
 
+class ProfileDeserializer(Serializer):
+    category = UUIDField()
+    bio = CharField(max_length=256)
+    description = CharField(max_length=1028)
+
 
 class ReviewSerializer(ModelSerializer):
     class Meta:

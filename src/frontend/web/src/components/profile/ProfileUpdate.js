@@ -1,18 +1,11 @@
+import * as React from 'react'
 import Alert from '@mui/material/Alert';
 import AlertContext from '../../context/AlertContext';
 import Button from '@mui/material/Button';
-import Link from '@mui/material/Link';
-import * as React from 'react'
-import Avatar from '@mui/material/Avatar';
-import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
-import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import Typography from '@mui/material/Typography';
-import Container from '@mui/material/Container';
 import AuthContext from '../../context/AuthContext';
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
@@ -20,14 +13,11 @@ import Select from '@mui/material/Select';
 import { Checkbox, ListItemText, OutlinedInput } from '@mui/material';
 
 // TODO: add option to update profile picture on profile
-function ProfileUpdate({ profileData }) {
+function ProfileUpdate({ profileData, onProfileUpdateSuccess }) {
     useQueryClient()
     const { alert, showAlert } = React.useContext(AlertContext)
     const [category, setCategory] = React.useState('');
-
-    const submitData = () => {
-        console.log("button clicked");
-    }
+    const { authTokens } = React.useContext(AuthContext);
 
     // eslint-disable-next-line no-unused-vars
     const { isLoading: categoriesLoading, data: availableCategories, error: categoriesError } = useQuery({
@@ -47,21 +37,61 @@ function ProfileUpdate({ profileData }) {
             }),
     })
 
+    const updateProfile = async ({ formData }) => {
+        const response = await fetch("http://127.0.0.1:8080/api/profile/update", {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authTokens?.access}`,
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update profile');
+        }
+
+        const data = await response.json();
+        return data;
+    };
+
+    const { mutate: updateProfileMutation, isLoading: profileUpdatePending, error: profileUpdateError } = useMutation({
+        mutationFn: (formData) => updateProfile({ formData }),
+        onSuccess: (data) => {
+            onProfileUpdateSuccess();
+            showAlert('Zaktualizowano profil', 'success')
+        },
+        onError: (error) => {
+            console.error('Failed to update profile', error);
+            showAlert('Nie udało się zaktualizować profilu', 'error')
+        }
+    });
+
     React.useEffect(() => {
         setCategory(profileData?.category)
-        console.log(profileData?.category);
     }, [profileData?.category])
+
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        const form_data = new FormData(event.currentTarget);
+        const formData = {
+            category: availableCategories?.find(cat => cat.name === category)?.id,
+            bio: form_data.get('bio'),
+            description: form_data.get('description'),
+        }
+        updateProfileMutation(formData);
+    };
 
     return (
         <>
-            {alert.open && <Alert severity={alert.severity}>{alert.message}</Alert>}
+            {alert.open && <Alert sx={{ mb: 3 }} severity={alert.severity}>{alert.message}</Alert>}
             {/* TODO: add https://mui.com/material-ui/react-text-field/#validation */}
-            <Box component="form" onSubmit={submitData} noValidate sx={{ mt: 1 }}>
+            <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
                 <FormControl fullWidth sx={{ mb: 1 }} >
                     <InputLabel id="category-checkbox-label">Kategoria</InputLabel>
                     <Select
                         labelId="category-multiple-checkbox-label"
-                        id="category-multiple-checkbox"
+                        id="category-select"
                         value={category}
                         onChange={(event) => setCategory(event.target.value)}
                         input={<OutlinedInput label="Kategoria" />}
@@ -82,7 +112,7 @@ function ProfileUpdate({ profileData }) {
                     fullWidth
                     id="bio"
                     label="Krótki opis"
-                    name="Bio"
+                    name="bio"
                     defaultValue={profileData?.bio}
                     multiline
                     rows={2}

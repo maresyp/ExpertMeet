@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path("profile/", views.get_profile, name="profile"),
+    path("profile/update", views.update_profile, name="update_profile"),
     #
     path("profile/feed", views.get_profile_feed, name="profile feed"),
     path("profile/reviews/feed/<uuid:profile_id>", views.get_reviews_feed, name="reviews feed"),
@@ -20,6 +21,4 @@ urlpatterns = [
     path("profile/update_review/<uuid:review_id>", views.update_review, name="update_review"),
     #
     path("profile/get_categories", views.get_profile_categories, name="get_profile_categories"),
-    path("profile/assign_category", views.assign_profile_category, name="add_profile_category"),
-    path("profile/remove_category", views.remove_profile_category, name="remove_profile_category"),
 ]
