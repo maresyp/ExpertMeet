@@ -188,10 +188,17 @@ def update_review(request, review_id: UUID) -> Response:
 
 
 @api_view(["GET"])
-def get_reviews_feed(_request, profile_id: UUID) -> Response:
-    reviews = Review.objects.filter(profile=profile_id)
+def get_reviews_feed(request, profile_id: UUID) -> Response:
+    queryset = Review.objects.filter(profile=profile_id)
+    paginator = StandardResultsSetPagination()
 
-    serializer = ReviewSerializer(reviews, many=True)
+    ordering = request.GET.get("ordering")
+    if ordering:
+        queryset = queryset.order_by(ordering)
+
+    paginated_qs = paginator.paginate_queryset(queryset, request)
+
+    serializer = ReviewSerializer(paginated_qs, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 

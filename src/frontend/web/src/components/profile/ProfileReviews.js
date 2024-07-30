@@ -1,21 +1,21 @@
 import * as React from 'react'
 import Alert from '@mui/material/Alert';
 import AlertContext from '../../context/AlertContext';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
 import Box from '@mui/material/Box';
-import AuthContext from '../../context/AuthContext';
 import { useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { Avatar, CircularProgress, Divider, Paper, Rating, Typography } from '@mui/material';
 import ReviewSummary from '../ReviewSummary';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
 
 function ProfileReviews({ profileData }) {
     useQueryClient()
     const { alert, showAlert } = React.useContext(AlertContext)
-    const { authTokens } = React.useContext(AuthContext);
     const [ordering, setOrdering] = React.useState('')
     const [noMorePages, setNoMorePages] = React.useState(false);
-
+    const boxRef = React.useRef(null);
 
     const fetchProfiles = async ({ queryKey }) => {
         // eslint-disable-next-line no-unused-vars
@@ -66,15 +66,56 @@ function ProfileReviews({ profileData }) {
         getNextPageParam: (lastPage, pages) => noMorePages ? undefined : pages.length + 1
     });
 
-    console.log(data);
+    const resetQuery = React.useCallback(() => {
+        refetch({ refetchPage: (page, index) => index === 0 });
+        setNoMorePages(false);
+    }, [refetch]);
+
+    const handleChangeOrdering = (event) => {
+        setOrdering(event.target.value);
+        resetQuery();
+    };
+
+    const handleScroll = React.useCallback(() => {
+        const reviewsContainer = boxRef.current;
+        if (reviewsContainer.scrollTop + reviewsContainer.clientHeight >= reviewsContainer.scrollHeight) {
+            fetchNextPage();
+        }
+    }, [fetchNextPage]);
+
+    React.useEffect(() => {
+
+        const boxElement = boxRef.current;
+        boxElement.addEventListener('scroll', handleScroll);
+
+        return () => {
+            boxElement.removeEventListener('scroll', handleScroll);
+        };
+    }, [handleScroll]);
+
     return (
         <>
             {alert.open && <Alert sx={{ mb: 3 }} severity={alert.severity}>{alert.message}</Alert>}
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 4 }}>
-                <Typography variant='h5' sx={{ mr: 6 }}>Podsumowanie recenzji na twoim profilu: </Typography>
+                <Typography variant='h5' sx={{ mr: 3 }}>Podsumowanie recenzji na profilu: </Typography>
                 <ReviewSummary profile_id={profileData?.id} />
+                <FormControl sx={{ m: 1, ml: 2, minWidth: 220 }} >
+                    <InputLabel id="ordering">Sortowanie</InputLabel>
+                    <Select
+                        labelId="demo-select-small-label"
+                        id="select-ordering"
+                        value={ordering}
+                        label="Sortowanie"
+                        onChange={handleChangeOrdering}
+                    >
+                        <MenuItem value={"-date_created"}>Najnowsze</MenuItem>
+                        <MenuItem value={"date_created"}>Najstarsze</MenuItem>
+                        <MenuItem value={"rating"}>Oceny (rosnąco)</MenuItem>
+                        <MenuItem value={"-rating"}>Oceny (malejąco)</MenuItem>
+                    </Select>
+                </FormControl>
             </Box>
-
+            <Box ref={boxRef} sx={{ maxHeight: 435, overflow: 'auto' }}>
             {data?.pages.map((group, i) => (
                 <React.Fragment key={i}>
                     {group.map((item, index) => (
@@ -89,6 +130,9 @@ function ProfileReviews({ profileData }) {
                                 <Divider flexItem />
                                 <Box sx={{ display: 'flex', alignItems: 'center', ml: 2, mt: 1, maxHeight: 80, overflow: 'auto', }} >
                                     <Typography variant='body1' sx={{ wordWrap: 'break-word' }}>
+                                        <span style={{ fontWeight: 'bold' }}>
+                                            {new Date(item.date_created).toLocaleDateString()}:&nbsp;
+                                        </span>
                                         {item.content}
                                     </Typography>
                                 </Box>
@@ -96,12 +140,12 @@ function ProfileReviews({ profileData }) {
                         </Box>
                     ))}
                 </React.Fragment>))}
-
-            {isFetchingNextPage && (
+                {isFetchingNextPage && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
                     <CircularProgress />
                 </Box>
             )}
+            </Box>
         </>
     );
 }
