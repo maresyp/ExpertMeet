@@ -52,8 +52,6 @@ function ProfileChangePassword() {
             new_password2: form_data.get('password2'),
         }
 
-        console.log(formData);
-
         updatePasswordMutation(formData);
     };
 
