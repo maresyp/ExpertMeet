@@ -15,6 +15,8 @@ import PropTypes from 'prop-types';
 import ProfileUpdate from '../components/profile/ProfileUpdate';
 import ProfileChangePassword from '../components/profile/ProfileChangePassword';
 import ProfileReviews from '../components/profile/ProfileReviews';
+import ProfileSchedule from '../components/profile/ProfileSchedule';
+import ProfileAppointmentsHistory from '../components/profile/ProfileHistory';
 
 function CustomTabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -141,13 +143,13 @@ const MyProfile = () => {
                                 <ProfileUpdate profileData={data} onProfileUpdateSuccess={handleProfileUpdateSuccess} />
                             </CustomTabPanel>
                             <CustomTabPanel value={value} index={1}>
-                                Item Two
+                                <ProfileSchedule />
                             </CustomTabPanel>
                             <CustomTabPanel value={value} index={2}>
                                 <ProfileReviews profileData={data} />
                             </CustomTabPanel>
                             <CustomTabPanel value={value} index={3}>
-                                Item Four
+                                <ProfileAppointmentsHistory />
                             </CustomTabPanel>
                             <CustomTabPanel value={value} index={4}>
                                 <ProfileChangePassword />

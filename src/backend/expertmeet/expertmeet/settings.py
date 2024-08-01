@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     #
     "users",
     "profiles",
+    "appointments",
 ]
 
 REST_FRAMEWORK = {
