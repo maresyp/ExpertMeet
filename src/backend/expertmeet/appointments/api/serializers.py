@@ -28,13 +28,14 @@ class AppointmentSerializer(ModelSerializer):
     def get_receiver_profile_name(self, obj) -> str:
         return f"{obj.receiver.first_name} {obj.receiver.last_name}"
 
+
 class ScheduleSerializer(ModelSerializer):
     class Meta:
         model = Schedule
         fields = "__all__"
 
 
-class TimeRangeSerializer(Serializer):
+class TimeRangeDeserializer(Serializer):
     time_format = "%H:%M"
     start = TimeField(required=False, allow_null=True, format=time_format)
     end = TimeField(required=False, allow_null=True, format=time_format)
@@ -51,10 +52,10 @@ class TimeRangeSerializer(Serializer):
 
 
 class ScheduleDeserializer(Serializer):
-    monday = TimeRangeSerializer(required=False, allow_null=True)
-    tuesday = TimeRangeSerializer(required=False, allow_null=True)
-    wednesday = TimeRangeSerializer(required=False, allow_null=True)
-    thursday = TimeRangeSerializer(required=False, allow_null=True)
-    friday = TimeRangeSerializer(required=False, allow_null=True)
-    saturday = TimeRangeSerializer(required=False, allow_null=True)
-    sunday = TimeRangeSerializer(required=False, allow_null=True)
+    monday = TimeRangeDeserializer(required=False, allow_null=True)
+    tuesday = TimeRangeDeserializer(required=False, allow_null=True)
+    wednesday = TimeRangeDeserializer(required=False, allow_null=True)
+    thursday = TimeRangeDeserializer(required=False, allow_null=True)
+    friday = TimeRangeDeserializer(required=False, allow_null=True)
+    saturday = TimeRangeDeserializer(required=False, allow_null=True)
+    sunday = TimeRangeDeserializer(required=False, allow_null=True)

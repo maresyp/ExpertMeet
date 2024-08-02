@@ -4,7 +4,7 @@ import AlertContext from '../../context/AlertContext';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import AuthContext from '../../context/AuthContext';
-import { useQueryClient, useMutation } from '@tanstack/react-query'
+import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query'
 import { Typography } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -15,7 +15,7 @@ function ProfileSchedule() {
     useQueryClient()
 
     const { alert, showAlert } = React.useContext(AlertContext)
-    const { authTokens } = React.useContext(AuthContext);
+    const { user, authTokens } = React.useContext(AuthContext);
 
     const [times, setTimes] = React.useState({
         monday: { start: null, end: null },
@@ -48,6 +48,38 @@ function ProfileSchedule() {
         }));
     };
 
+    const { isLoading: scheduleLoading, data: schedule, error: scheduleError, refetch } = useQuery({
+        queryKey: ['Schedule'],
+        queryFn: ({ signal }) =>
+            fetch(`http://127.0.0.1:8080/api/appointments/get_schedule/${user.user_id}`, {
+                signal,
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }).then((res) => {
+                if (!res.ok) {
+                    throw new Error('Failed to fetch')
+                }
+                return res.json()
+            }),
+    })
+
+    React.useEffect(() => {
+        if (schedule) {
+            console.log(schedule);
+            setTimes({
+                monday: { start: schedule.monday_start, end: schedule.monday_end },
+                tuesday: { start: schedule.tuesday_start, end: schedule.tuesday_end },
+                wednesday: { start: schedule.wednesday_start, end: schedule.wednesday_end },
+                thursday: { start: schedule.thursday_start, end: schedule.thursday_end },
+                friday: { start: schedule.friday_start, end: schedule.friday_end },
+                saturday: { start: schedule.saturday_start, end: schedule.saturday_end },
+                sunday: { start: schedule.sunday_start, end: schedule.sunday_end },
+            });
+        }
+    }, [schedule])
+
     const changeSchedule = async ({ formData }) => {
         const response = await fetch("http://127.0.0.1:8080/api/appointments/update_schedule", {
             method: 'PATCH',
@@ -70,6 +102,7 @@ function ProfileSchedule() {
         mutationFn: (formData) => changeSchedule({ formData }),
         onSuccess: (data) => {
             showAlert('Zaktualizowano harmonogram', 'success')
+            refetch();
         },
         onError: (error) => {
             console.error('Failed to update password', error);

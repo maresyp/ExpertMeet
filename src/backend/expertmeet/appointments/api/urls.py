@@ -7,6 +7,6 @@ urlpatterns = [
     path("appointments/accept/<uuid:pk>", views.accept_appointment, name="accept_appointment"),
     path("appointments/reject/<uuid:pk>", views.reject_appointment, name="reject_appointment"),
     #
-    path("appointments/get_schedule/<int:pk>", views.get_schedule, name="get_schedule"),
+    path("appointments/get_schedule/<int:user_id>", views.get_schedule, name="get_schedule"),
     path("appointments/update_schedule", views.update_schedule, name="update_schedule"),
 ]

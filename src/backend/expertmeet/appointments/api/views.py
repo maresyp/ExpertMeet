@@ -81,9 +81,8 @@ def reject_appointment(request, pk: UUID) -> Response:
     return Response({"ok": 200}, status=status.HTTP_200_OK)
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def get_schedule(request, user_id: int) -> Response:
-    schedule = Schedule.objects.filter(pk=user_id)
+def get_schedule(_request, user_id: int) -> Response:
+    schedule = get_object_or_404(Schedule, owner=user_id)
 
     serializer = ScheduleSerializer(schedule)
     return Response(serializer.data, status=status.HTTP_200_OK)
