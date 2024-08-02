@@ -147,8 +147,8 @@ function ProfileAppointmentsHistory() {
                         onChange={handleChangeOrdering}
                     >
                         <MenuItem value={"status"}>Status</MenuItem>
-                        <MenuItem value={"-date_created"}>Najnowsze</MenuItem>
-                        <MenuItem value={"date_created"}>Najstarsze</MenuItem>
+                        <MenuItem value={"-date_created"}>Od najnowszych</MenuItem>
+                        <MenuItem value={"date_created"}>Od Najstarszych</MenuItem>
                     </Select>
                 </FormControl>
             </Box>
@@ -165,14 +165,14 @@ function ProfileAppointmentsHistory() {
                                     <Box sx={{ display: 'flex', alignItems: 'center', ml: 2, mt: 1, }} >
                                         <Typography variant='body1' sx={{ wordWrap: 'break-word' }}>
                                             Inicjator spotkania:&nbsp;<span style={{ fontWeight: 'bold' }}>
-                                                {item.requested_by}
+                                                {item.requested_by_profile_name}
                                             </span>
                                         </Typography>
                                     </Box>
                                     <Box sx={{ display: 'flex', alignItems: 'center', ml: 2, mt: 1, }} >
                                         <Typography variant='body1' sx={{ wordWrap: 'break-word' }}>
                                             Odbiorca:&nbsp;<span style={{ fontWeight: 'bold' }}>
-                                                {item.receiver}
+                                                {item.receiver_profile_name}
                                             </span>
                                         </Typography>
                                     </Box>
