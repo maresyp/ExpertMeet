@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 if TYPE_CHECKING:
     from uuid import UUID
 
-from appointments.models import Appointment, AppointmentStatus
+from appointments.models import Appointment, AppointmentStatus, Schedule
 from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -16,7 +16,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .pagination import StandardResultsSetPagination
-from .serializers import AppointmentSerializer
+from .serializers import AppointmentSerializer, ScheduleDeserializer, ScheduleSerializer
 
 
 @api_view(["GET"])
@@ -77,5 +77,42 @@ def reject_appointment(request, pk: UUID) -> Response:
 
     appointment.status = AppointmentStatus.REJECTED.value
     appointment.save()
+
+    return Response({"ok": 200}, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_schedule(request, user_id: int) -> Response:
+    schedule = Schedule.objects.filter(pk=user_id)
+
+    serializer = ScheduleSerializer(schedule)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def update_schedule(request) -> Response:
+    schedule = get_object_or_404(Schedule, owner=request.user.id)
+
+    deserializer = ScheduleDeserializer(data=request.data)
+    if not deserializer.is_valid():
+        return Response(deserializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    data = deserializer.validated_data
+    schedule.monday_start = data["monday"]["start"]
+    schedule.monday_end = data["monday"]["end"]
+    schedule.tuesday_start = data["tuesday"]["start"]
+    schedule.tuesday_end = data["tuesday"]["end"]
+    schedule.wednesday_start = data["wednesday"]["start"]
+    schedule.wednesday_end = data["wednesday"]["end"]
+    schedule.thursday_start = data["thursday"]["start"]
+    schedule.thursday_end = data["thursday"]["end"]
+    schedule.friday_start = data["friday"]["start"]
+    schedule.friday_end = data["friday"]["end"]
+    schedule.saturday_start = data["saturday"]["start"]
+    schedule.saturday_end = data["saturday"]["end"]
+    schedule.sunday_start = data["sunday"]["start"]
+    schedule.sunday_end = data["sunday"]["end"]
+    schedule.save()
 
     return Response({"ok": 200}, status=status.HTTP_200_OK)

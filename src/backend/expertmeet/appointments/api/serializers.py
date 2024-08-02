@@ -1,8 +1,9 @@
 
 from uuid import UUID
 
-from appointments.models import Appointment
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from appointments.models import Appointment, Schedule
+from rest_framework.exceptions import ValidationError
+from rest_framework.serializers import ModelSerializer, Serializer, SerializerMethodField, TimeField
 
 
 class AppointmentSerializer(ModelSerializer):
@@ -26,3 +27,34 @@ class AppointmentSerializer(ModelSerializer):
 
     def get_receiver_profile_name(self, obj) -> str:
         return f"{obj.receiver.first_name} {obj.receiver.last_name}"
+
+class ScheduleSerializer(ModelSerializer):
+    class Meta:
+        model = Schedule
+        fields = "__all__"
+
+
+class TimeRangeSerializer(Serializer):
+    time_format = "%H:%M"
+    start = TimeField(required=False, allow_null=True, format=time_format)
+    end = TimeField(required=False, allow_null=True, format=time_format)
+
+    def validate(self, data):
+        start = data.get("start")
+        end = data.get("end")
+
+        if start and end and start > end:
+            msg: str = "Start time cannot be after end time."
+            raise ValidationError(msg)
+
+        return data
+
+
+class ScheduleDeserializer(Serializer):
+    monday = TimeRangeSerializer(required=False, allow_null=True)
+    tuesday = TimeRangeSerializer(required=False, allow_null=True)
+    wednesday = TimeRangeSerializer(required=False, allow_null=True)
+    thursday = TimeRangeSerializer(required=False, allow_null=True)
+    friday = TimeRangeSerializer(required=False, allow_null=True)
+    saturday = TimeRangeSerializer(required=False, allow_null=True)
+    sunday = TimeRangeSerializer(required=False, allow_null=True)

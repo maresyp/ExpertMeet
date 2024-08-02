@@ -2,59 +2,85 @@ import * as React from 'react'
 import Alert from '@mui/material/Alert';
 import AlertContext from '../../context/AlertContext';
 import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
 import Box from '@mui/material/Box';
 import AuthContext from '../../context/AuthContext';
 import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { Typography } from '@mui/material';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import dayjs from 'dayjs';
 
 function ProfileSchedule() {
     useQueryClient()
+
     const { alert, showAlert } = React.useContext(AlertContext)
     const { authTokens } = React.useContext(AuthContext);
 
-    // const changePassword = async ({ formData }) => {
-    //     const response = await fetch("http://127.0.0.1:8080/api/profile/change_password", {
-    //         method: 'PATCH',
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //             'Authorization': `Bearer ${authTokens?.access}`,
-    //         },
-    //         body: JSON.stringify(formData)
-    //     });
+    const [times, setTimes] = React.useState({
+        monday: { start: null, end: null },
+        tuesday: { start: null, end: null },
+        wednesday: { start: null, end: null },
+        thursday: { start: null, end: null },
+        friday: { start: null, end: null },
+        saturday: { start: null, end: null },
+        sunday: { start: null, end: null },
+    });
 
-    //     if (!response.ok) {
-    //         throw new Error("Failed to update password");
-    //     }
+    const dayTranslations = {
+        monday: 'Poniedziałek',
+        tuesday: 'Wtorek',
+        wednesday: 'Środa',
+        thursday: 'Czwartek',
+        friday: 'Piątek',
+        saturday: 'Sobota',
+        sunday: 'Niedziela',
+    };
 
-    //     const data = await response.json();
-    //     return data;
-    // };
+    const handleTimeChange = (day, type, newValue) => {
+        const formattedTime = newValue ? dayjs(newValue).format('HH:mm') : null;
+        setTimes((prevTimes) => ({
+            ...prevTimes,
+            [day]: {
+                ...prevTimes[day],
+                [type]: formattedTime,
+            },
+        }));
+    };
 
-    // // TODO: add proper error handling for cases like wrong password etc.
-    // const { mutate: updatePasswordMutation, isLoading: profileUpdatePending, error: profileUpdateError } = useMutation({
-    //     mutationFn: (formData) => changePassword({ formData }),
-    //     onSuccess: (data) => {
-    //         showAlert('Zaktualizowano hasło', 'success')
-    //     },
-    //     onError: (error) => {
-    //         console.error('Failed to update password', error);
-    //         showAlert('Nie udało się zaktualizować hasła', 'error')
-    //     }
-    // });
+    const changeSchedule = async ({ formData }) => {
+        const response = await fetch("http://127.0.0.1:8080/api/appointments/update_schedule", {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authTokens?.access}`,
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to update schedule");
+        }
+
+        const data = await response.json();
+        return data;
+    };
+
+    const { mutate: updateScheduleMutation } = useMutation({
+        mutationFn: (formData) => changeSchedule({ formData }),
+        onSuccess: (data) => {
+            showAlert('Zaktualizowano harmonogram', 'success')
+        },
+        onError: (error) => {
+            console.error('Failed to update password', error);
+            showAlert('Nie udało się zaktualizować harmonogramu', 'error')
+        }
+    });
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        const form_data = new FormData(event.currentTarget);
-        const formData = {
-            old_password: form_data.get('password0'),
-            new_password1: form_data.get('password1'),
-            new_password2: form_data.get('password2'),
-        }
-
-        console.log(formData);
-
-        // updatePasswordMutation(formData);
+        console.log('Submitted Times:', times);
+        updateScheduleMutation(times);
     };
 
     return (
@@ -62,10 +88,38 @@ function ProfileSchedule() {
             {alert.open && <Alert sx={{ mb: 3 }} severity={alert.severity}>{alert.message}</Alert>}
             {/* TODO: add https://mui.com/material-ui/react-text-field/#validation */}
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 4 }}>
-                <Typography variant='h5'>Wybierz dni tygodnia oraz godziny w których chcesz świadczyć swoje usługi:</Typography>
+                <Typography variant='h6'>Wybierz dni tygodnia oraz godziny w których chcesz świadczyć swoje usługi:</Typography>
             </Box>
-            <Box component="form" onSubmit={handleSubmit} noValidate>
-                xd
+            <Box component="form" onSubmit={handleSubmit} noValidate sx={{ justifyContent: 'center', alignItems: 'center' }}>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    {Object.keys(times).map((day) => (
+                        <Box key={day} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, width: '100%' }}>
+                            <Typography variant='h5'>{dayTranslations[day]}</Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <TimePicker
+                                    label="Godzina rozpoczęcia"
+                                    value={times[day].end ? dayjs(times[day].start, 'HH:mm') : null}
+                                    onChange={(newValue) => handleTimeChange(day, 'start', newValue)}
+                                    sx={{ mr: 2 }}
+                                />
+                                <TimePicker
+                                    label="Godzina zakończenia"
+                                    value={times[day].end ? dayjs(times[day].end, 'HH:mm') : null}
+                                    onChange={(newValue) => handleTimeChange(day, 'end', newValue)}
+                                />
+                            </Box>
+                        </Box>
+                    ))}
+                </LocalizationProvider>
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        sx={{ mt: 1, mb: 2 }}
+                    >
+                        Aktualizuj
+                    </Button>
+                </Box>
             </Box>
         </>
     );
