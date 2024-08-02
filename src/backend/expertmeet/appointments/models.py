@@ -1,4 +1,5 @@
 import uuid
+from enum import Enum
 from typing import ClassVar
 
 from django.contrib.auth.models import User
@@ -10,13 +11,18 @@ from django.utils import timezone
 
 class Schedule(models.Model): ...
 
+class AppointmentStatus(Enum):
+    PENDING = "1"
+    ACCEPTED = "2"
+    REJECTED = "3"
+
+    @classmethod
+    def choices(cls):
+        return [(key.value, key.name) for key in cls]
+
 
 class Appointment(models.Model):
-    STATUS_CHOICES: ClassVar = [
-        ("1", "PENDING"),
-        ("2", "ACCEPTED"),
-        ("3", "REJECTED"),
-    ]
+    STATUS_CHOICES: ClassVar = AppointmentStatus.choices()
 
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     requested_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="appointments_requested")

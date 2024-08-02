@@ -2,7 +2,7 @@ import * as React from 'react'
 import Alert from '@mui/material/Alert';
 import AlertContext from '../../context/AlertContext';
 import Box from '@mui/material/Box';
-import { useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
+import { useQueryClient, useInfiniteQuery, useMutation } from '@tanstack/react-query'
 import { Avatar, Button, CircularProgress, Divider, Paper, Typography } from '@mui/material';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -75,8 +75,14 @@ function ProfileAppointmentsHistory() {
     });
 
     const resetQuery = React.useCallback(() => {
-        refetch({ refetchPage: (page, index) => index === 0 });
-        setNoMorePages(false);
+        refetch({ refetchPage: (page, index) => index === 0 })
+            .then(result => {
+                console.log('Refetch result:', result);
+                setNoMorePages(false);
+            })
+            .catch(error => {
+                console.error('Refetch error:', error);
+            });
     }, [refetch]);
 
     const handleChangeOrdering = (event) => {
@@ -119,10 +125,77 @@ function ProfileAppointmentsHistory() {
         }
     }
 
-    console.log(data);
+    const acceptAppointment = async ({ appointmentID }) => {
+        const response = await fetch(`http://127.0.0.1:8080/api/appointments/accept/${appointmentID}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authTokens?.access}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to acceptAppointment');
+        }
+
+        const data = await response.json();
+        return data;
+    };
+
+    const { mutate: sendAcceptAppointment } = useMutation({
+        mutationFn: (appointmentID) => acceptAppointment({ appointmentID }),
+        onSuccess: (data) => {
+            showAlert('Zaktualizowano zaproszenie', 'success')
+            resetQuery();
+        },
+        onError: (error) => {
+            console.error('Failed to acceptAppointment', error);
+            showAlert('Nie udało się zaktualizować zaproszenia', 'error')
+        }
+    });
+
+    const handleAcceptAppointment = async (event, appointmentID) => {
+        event.preventDefault();
+        sendAcceptAppointment(appointmentID)
+    }
+
+    const rejectAppointment = async ({ appointmentID }) => {
+        const response = await fetch(`http://127.0.0.1:8080/api/appointments/reject/${appointmentID}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authTokens?.access}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to rejectAppointment');
+        }
+
+        const data = await response.json();
+        return data;
+    };
+
+    const { mutate: sendRejectAppointment } = useMutation({
+        mutationFn: (appointmentID) => rejectAppointment({ appointmentID }),
+        onSuccess: (data) => {
+            showAlert('Zaktualizowano zaproszenie', 'success')
+            resetQuery();
+        },
+        onError: (error) => {
+            console.error('Failed to rejectAppointment', error);
+            showAlert('Nie udało się zaktualizować zaproszenia', 'error')
+        }
+    });
+
+    const handleRejectAppointment = async (event, appointmentID) => {
+        event.preventDefault();
+        sendRejectAppointment(appointmentID)
+        resetQuery();
+    }
+
     return (
         <>
-            {alert.open && <Alert sx={{ mb: 3 }} severity={alert.severity}>{alert.message}</Alert>}
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 4 }}>
                 <FormControl sx={{ m: 1, ml: 2, minWidth: 280 }} >
                     <InputLabel id="filtering">Filtrowanie</InputLabel>
@@ -152,6 +225,7 @@ function ProfileAppointmentsHistory() {
                     </Select>
                 </FormControl>
             </Box>
+            {alert.open && <Alert sx={{ mb: 3 }} severity={alert.severity}>{alert.message}</Alert>}
             <Box ref={boxRef} sx={{ maxHeight: 435, overflow: 'auto' }}>
                 {data?.pages.map((group, i) => (
                     <React.Fragment key={i}>
@@ -193,6 +267,7 @@ function ProfileAppointmentsHistory() {
                                     <Box sx={{ mb: 2 }} />
                                     {user.user_id !== item.requested_by && item.status === "1" && <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                         <Button
+                                            onClick={(e) => handleRejectAppointment(e, item.id)}
                                             type="submit"
                                             variant="contained"
                                             color='error'
@@ -201,6 +276,7 @@ function ProfileAppointmentsHistory() {
                                             Odrzuć
                                         </Button>
                                         <Button
+                                            onClick={(e) => handleAcceptAppointment(e, item.id)}
                                             type="submit"
                                             variant="contained"
                                             color='success'

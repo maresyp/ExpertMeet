@@ -3,10 +3,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from django.shortcuts import get_object_or_404
+
 if TYPE_CHECKING:
     from uuid import UUID
 
-from appointments.models import Appointment
+from appointments.models import Appointment, AppointmentStatus
 from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -47,9 +49,33 @@ def create_appointment(request): ...
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def accept_appointment(request, pk: UUID): ...
+def accept_appointment(request, pk: UUID) -> Response:
+    appointment = get_object_or_404(Appointment, pk=pk)
+
+    if appointment.status != AppointmentStatus.PENDING.value:
+        return Response({"error": "This appointment is not in PENDING state"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if appointment.receiver != request.user:
+        return Response({"error": "You are not a receiver of this appointment"}, status=status.HTTP_403_FORBIDDEN)
+
+    appointment.status = AppointmentStatus.ACCEPTED.value
+    appointment.save()
+
+    return Response({"ok": 200}, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def reject_appointment(request, pk: UUID): ...
+def reject_appointment(request, pk: UUID) -> Response:
+    appointment = get_object_or_404(Appointment, pk=pk)
+
+    if appointment.status != AppointmentStatus.PENDING.value:
+        return Response({"error": "This appointment is not in PENDING state"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if appointment.receiver != request.user:
+        return Response({"error": "You are not a receiver of this appointment"}, status=status.HTTP_403_FORBIDDEN)
+
+    appointment.status = AppointmentStatus.REJECTED.value
+    appointment.save()
+
+    return Response({"ok": 200}, status=status.HTTP_200_OK)
