@@ -21,7 +21,7 @@ function ProfileAppointmentsHistory() {
 
     const fetchAppointmentsHistory = async ({ queryKey }) => {
         // eslint-disable-next-line no-unused-vars
-        const [_key, page, ordering] = queryKey;
+        const [_key, page, ordering, filtering] = queryKey;
 
         // Create URLSearchParams object
         const params = new URLSearchParams();
@@ -29,6 +29,10 @@ function ProfileAppointmentsHistory() {
 
         if (ordering) {
             params.append('ordering', ordering);
+        }
+
+        if (filtering) {
+            params.append('filtering', filtering);
         }
 
         const response = await fetch(`http://127.0.0.1:8080/api/appointments/feed?${params.toString()}`, {
@@ -65,8 +69,8 @@ function ProfileAppointmentsHistory() {
         status,
         refetch,
     } = useInfiniteQuery({
-        queryKey: ['AppointmentsHistory', ordering],
-        queryFn: ({ pageParam = 1 }) => fetchAppointmentsHistory({ queryKey: ['AppointmentsHistory', pageParam, ordering] }),
+        queryKey: ['AppointmentsHistory', ordering, filtering],
+        queryFn: ({ pageParam = 1 }) => fetchAppointmentsHistory({ queryKey: ['AppointmentsHistory', pageParam, ordering, filtering] }),
         getNextPageParam: (lastPage, pages) => noMorePages ? undefined : pages.length + 1
     });
 
@@ -129,8 +133,8 @@ function ProfileAppointmentsHistory() {
                         label="Filtrowanie"
                         onChange={handleChangeFiltering}
                     >
-                        <MenuItem value={"sent"}>Otrzymane zaproszenia</MenuItem>
-                        <MenuItem value={"received"}>Wysłane zaproszenia</MenuItem>
+                        <MenuItem value={"received"}>Otrzymane zaproszenia</MenuItem>
+                        <MenuItem value={"sent"}>Wysłane zaproszenia</MenuItem>
                     </Select>
                 </FormControl>
                 <FormControl sx={{ m: 1, ml: 2, minWidth: 220 }} >
@@ -162,6 +166,13 @@ function ProfileAppointmentsHistory() {
                                         <Typography variant='body1' sx={{ wordWrap: 'break-word' }}>
                                             Inicjator spotkania:&nbsp;<span style={{ fontWeight: 'bold' }}>
                                                 {item.requested_by}
+                                            </span>
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', ml: 2, mt: 1, }} >
+                                        <Typography variant='body1' sx={{ wordWrap: 'break-word' }}>
+                                            Odbiorca:&nbsp;<span style={{ fontWeight: 'bold' }}>
+                                                {item.receiver}
                                             </span>
                                         </Typography>
                                     </Box>

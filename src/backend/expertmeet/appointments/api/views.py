@@ -1,6 +1,10 @@
 
 from __future__ import annotations
-from uuid import UUID
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 from appointments.models import Appointment
 from django.db.models import Q
@@ -18,6 +22,13 @@ from .serializers import AppointmentSerializer
 def get_appointments_feed(request) -> Response:
     queryset = Appointment.objects.filter(Q(requested_by__id=request.user.id) | Q(receiver__id=request.user.id))
     paginator = StandardResultsSetPagination()
+
+    filtering = request.GET.get("filtering")
+    if filtering:
+        if filtering == "sent":
+            queryset = queryset.filter(requested_by__id=request.user.id)
+        elif filtering == "received":
+            queryset = queryset.filter(receiver__id=request.user.id)
 
     ordering = request.GET.get("ordering")
     if ordering:
