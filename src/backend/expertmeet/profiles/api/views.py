@@ -53,9 +53,12 @@ def update_profile(request):
 
     profile = get_object_or_404(Profile, user=request.user)
 
-    profile.category = Category(pk=deserializer.validated_data["category"])
-    profile.bio = deserializer.validated_data["bio"]
-    profile.description = deserializer.validated_data["description"]
+    if "category" in deserializer.validated_data:
+        profile.category = Category(pk=deserializer.validated_data["category"])
+    if "bio" in deserializer.validated_data:
+        profile.bio = deserializer.validated_data["bio"]
+    if "description" in deserializer.validated_data:
+        profile.description = deserializer.validated_data["description"]
 
     profile.save()
     return Response(data={"ok": 200}, status=status.HTTP_200_OK)

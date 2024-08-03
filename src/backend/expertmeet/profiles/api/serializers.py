@@ -23,9 +23,10 @@ class ProfileSerializer(ModelSerializer):
         return str(obj.category.name) if obj.category else None
 
 class ProfileDeserializer(Serializer):
-    category = UUIDField()
-    bio = CharField(max_length=256)
-    description = CharField(max_length=1028)
+    category = UUIDField(required=False, allow_null=True)
+    bio = CharField(required=False, allow_blank=True, max_length=256)
+    description = CharField(required=False, allow_blank=True, max_length=1028)
+
 
 class PasswordChangeDeserializer(Serializer):
     old_password = CharField(max_length=128)
