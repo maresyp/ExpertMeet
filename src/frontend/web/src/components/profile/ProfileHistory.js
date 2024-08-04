@@ -3,7 +3,7 @@ import Alert from '@mui/material/Alert';
 import AlertContext from '../../context/AlertContext';
 import Box from '@mui/material/Box';
 import { useQueryClient, useInfiniteQuery, useMutation } from '@tanstack/react-query'
-import { Avatar, Button, CircularProgress, Divider, Paper, Typography } from '@mui/material';
+import { Button, CircularProgress, Divider, Paper, Typography } from '@mui/material';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';

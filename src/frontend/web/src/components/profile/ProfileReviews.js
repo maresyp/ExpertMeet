@@ -17,7 +17,7 @@ function ProfileReviews({ profileData }) {
     const [noMorePages, setNoMorePages] = React.useState(false);
     const boxRef = React.useRef(null);
 
-    const fetchProfiles = async ({ queryKey }) => {
+    const fetchReviews = async ({ queryKey }) => {
         // eslint-disable-next-line no-unused-vars
         const [_key, page, ordering] = queryKey;
 
@@ -62,7 +62,7 @@ function ProfileReviews({ profileData }) {
         refetch,
     } = useInfiniteQuery({
         queryKey: ['Reviews', ordering],
-        queryFn: ({ pageParam = 1 }) => fetchProfiles({ queryKey: ['Reviews', pageParam, ordering] }),
+        queryFn: ({ pageParam = 1 }) => fetchReviews({ queryKey: ['Reviews', pageParam, ordering] }),
         getNextPageParam: (lastPage, pages) => noMorePages ? undefined : pages.length + 1
     });
 

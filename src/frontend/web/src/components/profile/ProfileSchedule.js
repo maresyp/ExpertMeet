@@ -118,11 +118,11 @@ function ProfileSchedule() {
 
     return (
         <>
-            {alert.open && <Alert sx={{ mb: 3 }} severity={alert.severity}>{alert.message}</Alert>}
             {/* TODO: add https://mui.com/material-ui/react-text-field/#validation */}
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 4 }}>
                 <Typography variant='h6'>Wybierz dni tygodnia oraz godziny w których chcesz świadczyć swoje usługi:</Typography>
             </Box>
+            {alert.open && <Alert sx={{ mb: 3 }} severity={alert.severity}>{alert.message}</Alert>}
             <Box component="form" onSubmit={handleSubmit} noValidate sx={{ justifyContent: 'center', alignItems: 'center' }}>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     {Object.keys(times).map((day) => (
@@ -131,7 +131,7 @@ function ProfileSchedule() {
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <TimePicker
                                     label="Godzina rozpoczęcia"
-                                    value={times[day].end ? dayjs(times[day].start, 'HH:mm') : null}
+                                    value={times[day].start ? dayjs(times[day].start, 'HH:mm') : null}
                                     onChange={(newValue) => handleTimeChange(day, 'start', newValue)}
                                     sx={{ mr: 2 }}
                                 />
