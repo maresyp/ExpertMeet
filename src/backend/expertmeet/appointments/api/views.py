@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from uuid import UUID
 
 from appointments.models import Appointment, AppointmentStatus, Schedule
+from django.contrib.auth.models import User
 from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -16,7 +17,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .pagination import StandardResultsSetPagination
-from .serializers import AppointmentSerializer, ScheduleDeserializer, ScheduleSerializer
+from .serializers import AppointmentDeserializer, AppointmentSerializer, ScheduleDeserializer, ScheduleSerializer
 
 
 @api_view(["GET"])
@@ -44,7 +45,20 @@ def get_appointments_feed(request) -> Response:
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def create_appointment(request): ...
+def create_appointment(request, profile_id: int):
+    receiver = get_object_or_404(User, profile__id=profile_id)
+
+    deserializer = AppointmentDeserializer(data=request.data)
+    if not deserializer.is_valid():
+        return Response(deserializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    Appointment.objects.create(
+        requested_by=request.user,
+        receiver=receiver,
+        date_scheduled=deserializer.validated_data["date"],
+    )
+
+    return Response({"ok": 200}, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
@@ -81,8 +95,9 @@ def reject_appointment(request, pk: UUID) -> Response:
     return Response({"ok": 200}, status=status.HTTP_200_OK)
 
 @api_view(["GET"])
-def get_schedule(_request, user_id: int) -> Response:
-    schedule = get_object_or_404(Schedule, owner=user_id)
+def get_schedule(_request, profile_id: int) -> Response:
+    user = get_object_or_404(User, profile__id=profile_id)
+    schedule = get_object_or_404(Schedule, owner=user.id)
 
     serializer = ScheduleSerializer(schedule)
     return Response(serializer.data, status=status.HTTP_200_OK)

@@ -3,7 +3,7 @@ from uuid import UUID
 
 from appointments.models import Appointment, Schedule
 from rest_framework.exceptions import ValidationError
-from rest_framework.serializers import ModelSerializer, Serializer, SerializerMethodField, TimeField
+from rest_framework.serializers import DateTimeField, ModelSerializer, Serializer, SerializerMethodField, TimeField
 
 
 class AppointmentSerializer(ModelSerializer):
@@ -27,6 +27,10 @@ class AppointmentSerializer(ModelSerializer):
 
     def get_receiver_profile_name(self, obj) -> str:
         return f"{obj.receiver.first_name} {obj.receiver.last_name}"
+
+
+class AppointmentDeserializer(Serializer):
+    date = DateTimeField()
 
 
 class ScheduleSerializer(ModelSerializer):

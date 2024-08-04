@@ -14,6 +14,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Chat from './pages/Chat';
 import VideoOverlay from './components/video/VideoOverlay';
 import Video from './pages/Video';
+import VisitProfile from './pages/VisitProfile';
 
 // Create a client for web requests
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ function App() {
                 <NavBar />
                 <Routes>
                   <Route element={<HomePage />} exact path='/' />
+                  <Route element={<VisitProfile />} path='/visit/:profileID' />
                   <Route element={<AuthRoutes />}>
                     {/* Login / Register */}
                     <Route element={<SignIn />} path='/login' />

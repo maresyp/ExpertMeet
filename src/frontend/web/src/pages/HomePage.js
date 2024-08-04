@@ -16,7 +16,7 @@ import ListItemText from '@mui/material/ListItemText';
 import Checkbox from '@mui/material/Checkbox';
 import { useDebounce } from 'use-debounce'
 import { CircularProgress } from '@mui/material';
-
+import { useNavigate } from 'react-router-dom';
 const HomePage = () => {
     useQueryClient()
 
@@ -25,6 +25,7 @@ const HomePage = () => {
     const [ordering, setOrdering] = React.useState('')
     const [selectedCategories, setSelectedCategories] = React.useState([]);
     const [noMorePages, setNoMorePages] = React.useState(false);
+    const navigate = useNavigate();
 
     // eslint-disable-next-line no-unused-vars
     const { isLoading: categoriesLoading, data: availableCategories, error: categoriesError } = useQuery({
@@ -99,8 +100,9 @@ const HomePage = () => {
         getNextPageParam: (lastPage, pages) => noMorePages ? undefined : pages.length + 1
     });
 
-    const handleClick = () => {
+    const handleClick = (profileID) => {
         console.log('Box clicked');
+        navigate(`/visit/${profileID}`);
     };
 
     if (error) {
@@ -214,7 +216,7 @@ const HomePage = () => {
                         }).map((item, index) => (
                             <Box mb={4} key={index}>
                             <Paper elevation={1}>
-                                <Box onClick={handleClick} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <Box onClick={() => handleClick(item.id)} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <Avatar alt="User" src={`http://127.0.0.1:8080/api/profile/get_avatar/${item.id}`} />
                                     <Typography variant='h5'>{item.username}</Typography>
                                 </Box>

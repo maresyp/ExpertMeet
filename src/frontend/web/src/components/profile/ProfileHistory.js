@@ -260,7 +260,7 @@ function ProfileAppointmentsHistory() {
                                     <Box sx={{ display: 'flex', alignItems: 'center', ml: 2, mt: 1, }} >
                                         <Typography variant='body1' sx={{ wordWrap: 'break-word' }}>
                                             Spotkanie zaplanowane na:&nbsp;<span style={{ fontWeight: 'bold' }}>
-                                                {new Date(item.date_created).toLocaleDateString()} {new Date(item.date_created).toLocaleTimeString()}
+                                                {new Date(item.date_scheduled).toLocaleDateString()} {new Date(item.date_scheduled).toLocaleTimeString()}
                                             </span>
                                         </Typography>
                                     </Box>

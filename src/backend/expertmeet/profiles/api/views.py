@@ -7,11 +7,13 @@ if TYPE_CHECKING:
 
 from pathlib import Path
 
+from appointments.models import Appointment
+from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import (
     ValidationError,
 )
-from django.db.models import F
+from django.db.models import F, Q
 from django.db.models.functions import Lower, Substr
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
@@ -136,7 +138,7 @@ def get_profile_feed(request) -> Response:
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(["POST"])
+@api_view(["PUT"])
 @permission_classes([IsAuthenticated])
 def add_review(request, profile_id: UUID) -> Response:
     deserializer = ReviewDeserializer(data=request.data)
@@ -151,6 +153,10 @@ def add_review(request, profile_id: UUID) -> Response:
     if profile.review_set.filter(author=request.user).exists():
         return Response({"errors": ["Can't make more than one review for given profile"]}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
+    user = get_object_or_404(User, profile__id=profile_id)
+    if not Appointment.objects.filter(Q(requested_by=request.user) & Q(receiver=user.id)):
+        return Response({"errors": ["You don't have any appointments with given user"]}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
     Review.objects.create(
         author=request.user,
         profile=profile,
@@ -158,7 +164,7 @@ def add_review(request, profile_id: UUID) -> Response:
         content=deserializer.validated_data["content"],
     )
 
-    return Response(status=status.HTTP_201_CREATED)
+    return Response({"ok": status.HTTP_201_CREATED}, status=status.HTTP_201_CREATED)
 
 
 @api_view(["DELETE"])

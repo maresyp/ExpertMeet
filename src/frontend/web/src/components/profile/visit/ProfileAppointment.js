@@ -1,21 +1,23 @@
 import * as React from 'react'
 import Alert from '@mui/material/Alert';
-import AlertContext from '../../context/AlertContext';
+import AlertContext from '../../../context/AlertContext';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
-import AuthContext from '../../context/AuthContext';
+import AuthContext from '../../../context/AuthContext';
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query'
 import { Typography } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import dayjs from 'dayjs';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
-function ProfileSchedule({ profileData }) {
+function ProfileAppointment({ profileData }) {
     useQueryClient()
 
     const { alert, showAlert } = React.useContext(AlertContext)
     const { user, authTokens } = React.useContext(AuthContext);
+    const [selectedDate, setSelectedDate] = React.useState(null);
 
     const [times, setTimes] = React.useState({
         monday: { start: null, end: null },
@@ -37,19 +39,8 @@ function ProfileSchedule({ profileData }) {
         sunday: 'Niedziela',
     };
 
-    const handleTimeChange = (day, type, newValue) => {
-        const formattedTime = newValue ? dayjs(newValue).format('HH:mm') : null;
-        setTimes((prevTimes) => ({
-            ...prevTimes,
-            [day]: {
-                ...prevTimes[day],
-                [type]: formattedTime,
-            },
-        }));
-    };
-
     const { isLoading: scheduleLoading, data: schedule, error: scheduleError, refetch } = useQuery({
-        queryKey: ['Schedule', profileData.id],
+        queryKey: ['VisitSchedule', profileData.id],
         queryFn: ({ signal }) =>
             fetch(`http://127.0.0.1:8080/api/appointments/get_schedule/${profileData.id}`, {
                 signal,
@@ -80,9 +71,9 @@ function ProfileSchedule({ profileData }) {
         }
     }, [schedule])
 
-    const changeSchedule = async ({ formData }) => {
-        const response = await fetch("http://127.0.0.1:8080/api/appointments/update_schedule", {
-            method: 'PATCH',
+    const fetchCreateAppointment = async ({ formData }) => {
+        const response = await fetch(`http://127.0.0.1:8080/api/appointments/create_appointment/${profileData.id}`, {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${authTokens?.access}`,
@@ -98,65 +89,82 @@ function ProfileSchedule({ profileData }) {
         return data;
     };
 
-    const { mutate: updateScheduleMutation } = useMutation({
-        mutationFn: (formData) => changeSchedule({ formData }),
+    const { mutate: createAppointment } = useMutation({
+        mutationFn: (formData) => fetchCreateAppointment({ formData }),
         onSuccess: (data) => {
-            showAlert('Zaktualizowano harmonogram', 'success')
+            showAlert('Wysłano zapytanie o spotkanie', 'success')
             refetch();
         },
         onError: (error) => {
             console.error('Failed to update password', error);
-            showAlert('Nie udało się zaktualizować harmonogramu', 'error')
+            showAlert('Nie udało się wysłać zapytania o spotkanie', 'error')
         }
     });
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        console.log('Submitted Times:', times);
-        updateScheduleMutation(times);
+
+        createAppointment({ date: selectedDate });
+    };
+
+    const handleDateChange = (newValue) => {
+        setSelectedDate(newValue);
     };
 
     return (
         <>
-            {/* TODO: add https://mui.com/material-ui/react-text-field/#validation */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 4 }}>
-                <Typography variant='h6'>Wybierz dni tygodnia oraz godziny w których chcesz świadczyć swoje usługi:</Typography>
-            </Box>
             {alert.open && <Alert sx={{ mb: 3 }} severity={alert.severity}>{alert.message}</Alert>}
-            <Box component="form" onSubmit={handleSubmit} noValidate sx={{ justifyContent: 'center', alignItems: 'center' }}>
+            {user && <>
+                <Box component="form" onSubmit={handleSubmit} noValidate >
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            <DateTimePicker
+                                onChange={handleDateChange}
+                                value={selectedDate}
+                                label="Wybierz datę spotkania"
+                            />
+                        </LocalizationProvider>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            sx={{ mt: 2, mb: 2, }}
+                        >
+                            Wyślij
+                        </Button>
+                    </Box>
+                </Box>
+
+            </>}
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 4 }}>
+                <Typography variant='h6'>Sprawdź harmonogram dla tego profilu:</Typography>
+            </Box>
+            <Box sx={{ justifyContent: 'center', alignItems: 'center' }}>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     {Object.keys(times).map((day) => (
                         <Box key={day} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, width: '100%' }}>
                             <Typography variant='h5'>{dayTranslations[day]}</Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <TimePicker
+                                    readOnly
                                     label="Godzina rozpoczęcia"
                                     value={times[day].start ? dayjs(times[day].start, 'HH:mm') : null}
-                                    onChange={(newValue) => handleTimeChange(day, 'start', newValue)}
                                     sx={{ mr: 2 }}
                                 />
                                 <TimePicker
+                                    readOnly
                                     label="Godzina zakończenia"
                                     value={times[day].end ? dayjs(times[day].end, 'HH:mm') : null}
-                                    onChange={(newValue) => handleTimeChange(day, 'end', newValue)}
                                 />
                             </Box>
                         </Box>
                     ))}
                 </LocalizationProvider>
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        sx={{ mt: 1, mb: 2 }}
-                    >
-                        Aktualizuj
-                    </Button>
-                </Box>
             </Box>
         </>
     );
 }
 
 
-export default ProfileSchedule;
+export default ProfileAppointment;

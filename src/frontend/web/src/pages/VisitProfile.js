@@ -9,14 +9,23 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
+import Divider from '@mui/material/Divider';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
 import Avatar from '@mui/material/Avatar';
+import Fab from '@mui/material/Fab';
+import SendIcon from '@mui/icons-material/Send';
+import CallIcon from '@mui/icons-material/Call';
+import { Badge, IconButton, Tooltip } from '@mui/material';
+import { useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import ProfileUpdate from '../components/profile/ProfileUpdate';
-import ProfileChangePassword from '../components/profile/ProfileChangePassword';
-import ProfileReviews from '../components/profile/ProfileReviews';
-import ProfileSchedule from '../components/profile/ProfileSchedule';
-import ProfileAppointmentsHistory from '../components/profile/ProfileHistory';
+import ProfileReviews from '../components/profile/visit/ProfileReviews';
+import ProfileInfo from '../components/profile/visit/ProfileInfo';
+import ProfileAppointment from '../components/profile/visit/ProfileAppointment';
 
 function CustomTabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -47,24 +56,24 @@ function a11yProps(index) {
     };
 }
 
-const MyProfile = () => {
+const VisitProfile = () => {
     const { authTokens } = React.useContext(AuthContext)
     const [value, setValue] = React.useState(0);
+    const { profileID } = useParams(null);
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
 
     useQueryClient()
-    const { isLoading, data, error, refetch } = useQuery({
-        queryKey: ['Profile'],
+    const { isLoading, data, error } = useQuery({
+        queryKey: ['VisitProfile'],
         queryFn: ({ signal }) =>
-            fetch("http://127.0.0.1:8080/api/profile/", {
+            fetch(`http://127.0.0.1:8080/api/profile/visit/${profileID}`, {
                 signal,
-                method: 'POST',
+                method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authTokens?.access}`
                 },
             }).then((res) => {
                 if (!res.ok) {
@@ -84,10 +93,6 @@ const MyProfile = () => {
         )
     }
 
-    const handleProfileUpdateSuccess = () => {
-        refetch();
-    };
-
     return (
         <Container component="main" maxWidth="lg" sx={{ height: '700px' }}>
             <CssBaseline />
@@ -101,7 +106,7 @@ const MyProfile = () => {
             >
                 <Grid container>
                     <Grid item xs={12} >
-                        <Typography variant="h5" className="header-message" style={{ textAlign: 'center', paddingBottom: '25px' }}>Twój profil</Typography>
+                        <Typography variant="h5" className="header-message" style={{ textAlign: 'center', paddingBottom: '25px' }}>Odwiedzasz profil</Typography>
                     </Grid>
                 </Grid>
                 <Grid container component={Paper}
@@ -121,38 +126,30 @@ const MyProfile = () => {
                                 sx={{ width: 100, height: 100 }}
                             />
                             <Typography variant="h6" style={{ paddingTop: '15px' }}>
-                                {data?.username}
+                                {data.username}
                             </Typography>
                         </Grid>
 
                     </Grid>
                     <Grid item xs={9} sx={{ display: 'flex', flexDirection: 'column', height: '700px' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '35px', maxHeight: '65px' }}>
-                                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                                    <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
+                            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                                <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
                                     <Tab label="informacje" {...a11yProps(0)} />
                                     <Tab label="harmonogram" {...a11yProps(1)} />
                                     <Tab label="recenzje" {...a11yProps(2)} />
-                                    <Tab label="historia" {...a11yProps(3)} />
-                                    <Tab label="ustawienia" {...a11yProps(4)} />
                                 </Tabs>
                             </Box>
                         </Box>
                         <Box sx={{ overflow: 'auto', flex: 1 }}>
                             <CustomTabPanel value={value} index={0}>
-                                <ProfileUpdate profileData={data} onProfileUpdateSuccess={handleProfileUpdateSuccess} />
+                                <ProfileInfo profileData={data} />
                             </CustomTabPanel>
                             <CustomTabPanel value={value} index={1}>
-                                <ProfileSchedule profileData={data} />
+                                <ProfileAppointment profileData={data} />
                             </CustomTabPanel>
                             <CustomTabPanel value={value} index={2}>
                                 <ProfileReviews profileData={data} />
-                            </CustomTabPanel>
-                            <CustomTabPanel value={value} index={3}>
-                                <ProfileAppointmentsHistory />
-                            </CustomTabPanel>
-                            <CustomTabPanel value={value} index={4}>
-                                <ProfileChangePassword />
                             </CustomTabPanel>
                         </Box>
                         <Grid container style={{ padding: '20px' }}></Grid>
@@ -163,4 +160,4 @@ const MyProfile = () => {
     )
 }
 
-export default MyProfile
+export default VisitProfile
