@@ -9,23 +9,15 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
-import Divider from '@mui/material/Divider';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
 import Avatar from '@mui/material/Avatar';
-import Fab from '@mui/material/Fab';
-import SendIcon from '@mui/icons-material/Send';
-import CallIcon from '@mui/icons-material/Call';
-import { Badge, IconButton, Tooltip } from '@mui/material';
+import { Button } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import ProfileReviews from '../components/profile/visit/ProfileReviews';
 import ProfileInfo from '../components/profile/visit/ProfileInfo';
 import ProfileAppointment from '../components/profile/visit/ProfileAppointment';
+import { useNavigate } from 'react-router-dom';
 
 function CustomTabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -60,6 +52,7 @@ const VisitProfile = () => {
     const { authTokens } = React.useContext(AuthContext)
     const [value, setValue] = React.useState(0);
     const { profileID } = useParams(null);
+    const navigate = useNavigate();
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
@@ -91,6 +84,11 @@ const VisitProfile = () => {
         return (
             <p>Loading...</p>
         )
+    }
+    console.log(data);
+
+    const navigateToChat = () => {
+        navigate(`/chat/${data?.user_id}`)
     }
 
     return (
@@ -128,6 +126,18 @@ const VisitProfile = () => {
                             <Typography variant="h6" style={{ paddingTop: '15px' }}>
                                 {data.username}
                             </Typography>
+                            <Box sx={{ justifyContent: 'center', alignItems: 'center', mt: 45 }}>
+                                <Typography variant="h6" >
+                                    Kontakt:
+                                </Typography>
+                                <Button
+                                    type="submit"
+                                    variant="contained"
+                                    onClick={navigateToChat}
+                                >
+                                    Przejdź do Czatu
+                                </Button>
+                            </Box>
                         </Grid>
 
                     </Grid>

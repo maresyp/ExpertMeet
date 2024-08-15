@@ -1,26 +1,36 @@
 from __future__ import annotations
 
-from typing import ClassVar
-from uuid import UUID
+from typing import TYPE_CHECKING, ClassVar
 
+if TYPE_CHECKING:
+    from uuid import UUID
+
+from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.shortcuts import get_object_or_404
 from profiles.models import Category, Profile, Review, ReviewSummary
 from rest_framework.serializers import CharField, FloatField, ModelSerializer, Serializer, SerializerMethodField, UUIDField
 
 
 class ProfileSerializer(ModelSerializer):
     username = SerializerMethodField()
+    user_id = SerializerMethodField()
     category = SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields: ClassVar = ["id", "username", "bio", "category", "description"]
+        fields: ClassVar = ["id", "username", "user_id", "bio", "category", "description"]
 
     def get_username(self, obj) -> str:
         return f"{obj.user.first_name} {obj.user.last_name}"
 
     def get_category(self, obj) -> str | None:
         return str(obj.category.name) if obj.category else None
+
+    def get_user_id(self, obj) -> int:
+        user = get_object_or_404(User, profile__id=obj.id)
+        return user.id
+
 
 class ProfileDeserializer(Serializer):
     category = UUIDField(required=False, allow_null=True)
