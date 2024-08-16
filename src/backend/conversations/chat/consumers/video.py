@@ -22,8 +22,6 @@ class VideoConsumer(AsyncWebsocketConsumer):
                     await self.video_offer_handler(text_data_json)
                 case "video_answer":
                     await self.video_answer_handler(text_data_json)
-                case "video_ice_candidate":
-                    await self.new_ice_candidate_handler(text_data_json)
                 case "end_call":
                     await self.end_call_handler(text_data_json)
                 case "video_rejected":
@@ -31,19 +29,18 @@ class VideoConsumer(AsyncWebsocketConsumer):
                 case "ping":
                     await self.chat_ping_handler(text_data_json)
         except KeyError:
-            # TODO: send error message to user
             return
 
     async def chat_ping_handler(self, _data):
         await self.send(text_data="pong")
 
     async def video_offer_handler(self, data):
+        print(f"Sending offer to: {data['recipient']}")
         await self.channel_layer.group_send(
             f"video_{data['recipient']}",
             {
                 "type": "video_offer",
                 "callerID": self.scope["user_id"],
-                "offer": data["offer"],
             },
         )
 
@@ -53,7 +50,6 @@ class VideoConsumer(AsyncWebsocketConsumer):
                 {
                     "type": "video_offer",
                     "callerID": data["callerID"],
-                    "offer": data["offer"],
                 },
             ),
         )
@@ -62,40 +58,19 @@ class VideoConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             f"video_{data['recipient']}",
             {
-                "type": "video_result",
+                "type": "video_answer",
                 "recipient": self.scope["user"].id,
-                "answer": data["answer"],
+                "peer": data["peer"],
             },
         )
 
-    async def video_result(self, data):
+    async def video_answer(self, data):
         await self.send(
             text_data=json.dumps(
                 {
-                    "type": "video_result",
+                    "type": "video_answer",
                     "recipient": data["recipient"],
-                    "answer": data["answer"],
-                },
-            ),
-        )
-
-    async def new_ice_candidate_handler(self, data):
-        await self.channel_layer.group_send(
-            f"video_{data['recipient']}",
-            {
-                "type": "new_ice_candidate",
-                "recipient": self.scope["user_id"],
-                "candidate": data["candidate"],
-            },
-        )
-
-    async def new_ice_candidate(self, data):
-        await self.send(
-            text_data=json.dumps(
-                {
-                    "type": "new-ice-candidate",
-                    "recipient": data["recipient"],
-                    "candidate": data["candidate"],
+                    "peer": data["peer"],
                 },
             ),
         )
