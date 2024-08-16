@@ -14,7 +14,7 @@ services:
       - conversations-nginx-server
     develop:
       watch:
-        - action: sync
+        - action: rebuild
           path: ./src/frontend/web
           target: /app
           ignore:
@@ -28,8 +28,8 @@ services:
     build:
       context: src/frontend/web
       dockerfile: peerJS.Dockerfile
-    expose:
-      - 9000
+    ports:
+      - 9000:9000
     depends_on:
       - frontend-web-server
 
