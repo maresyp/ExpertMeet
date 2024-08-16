@@ -35,7 +35,6 @@ class VideoConsumer(AsyncWebsocketConsumer):
         await self.send(text_data="pong")
 
     async def video_offer_handler(self, data):
-        print(f"Sending offer to: {data['recipient']}")
         await self.channel_layer.group_send(
             f"video_{data['recipient']}",
             {
