@@ -23,19 +23,33 @@ const Video = () => {
     const location = useLocation();
     const { userID, action } = location.state || {};
 
-    const connectionStatus = {
-        INIT: "init",
-        CALLING: 'calling',
-        ACTIVE: 'active',
-    };
-
     const [localStream, setLocalStream] = useState(new MediaStream());
-    const [remoteStream, setRemoteStream] = useState(null);
+    const [remoteStream, setRemoteStream] = useState(new MediaStream());
     const videoLocalRef = useRef(localStream);
     const videoRemoteRef = useRef(remoteStream);
 
+    const initializeLocalStream = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            setLocalStream(stream);
+            if (videoLocalRef.current) {
+                videoLocalRef.current.srcObject = stream;
+            }
+        } catch (error) {
+            console.error('Error accessing media devices.', error);
+        }
+    };
+
     useEffect(() => {
-        // peer.on()
+        peer.on('call', function (call) {
+            call.answer(localStream)
+            call.on('stream', function (stream) {
+                setRemoteStream(stream);
+                if (videoRemoteRef.current) {
+                    videoRemoteRef.current.srcObject = stream;
+                }
+            })
+        })
     }, [])
 
     // If call was accepted - start connection with peer js
@@ -43,7 +57,7 @@ const Video = () => {
         if (lastJsonMessage) {
             if (lastJsonMessage.type === 'video_answer') {
                 console.log(lastJsonMessage);
-                peer.connect(lastJsonMessage.peer);
+                const mediaConnection = peer.call(lastJsonMessage.peer, localStream);
             } else if (lastJsonMessage.type === "end_call") {
                 // peer.disconnect();
             }
@@ -57,15 +71,16 @@ const Video = () => {
                 type: "video_offer",
                 recipient: location.state.userID,
             })
+            initializeLocalStream();
         } else if (action === "acceptCall") {
             console.log("acceptCall");
             console.log(peer.id);
-
             sendJsonMessage({
                 type: "video_answer",
                 recipient: location.state.userID,
                 peer: peer.id,
             })
+            initializeLocalStream();
         }
     }, [action, userID])
 

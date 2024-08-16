@@ -7,8 +7,8 @@ const VideoContext = React.createContext();
 export default VideoContext;
 
 export const VideoProvider = ({ children }) => {
-    const { sendJsonMessage, lastJsonMessage, readyState } = VideoWebSocket();
     const peerRef = React.useRef(null);
+    const { sendJsonMessage, lastJsonMessage, readyState } = VideoWebSocket();
 
     React.useEffect(() => {
         if (!peerRef.current) {
