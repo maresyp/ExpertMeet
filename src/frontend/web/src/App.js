@@ -15,6 +15,7 @@ import Chat from './pages/Chat';
 import VideoOverlay from './components/video/VideoOverlay';
 import Video from './pages/Video';
 import VisitProfile from './pages/VisitProfile';
+import { VideoProvider } from './context/VideoContext';
 
 // Create a client for web requests
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ function App() {
       <Router>
         <AuthProvider>
           <AlertProvider>
+              <VideoProvider>
               <QueryClientProvider client={queryClient}>
                 <VideoOverlay />
                 <NavBar />
@@ -48,6 +50,7 @@ function App() {
                   <Route path="*" element={<HomePage />} />
                 </Routes>
               </QueryClientProvider>
+              </VideoProvider>
           </AlertProvider>
         </AuthProvider>
       </Router>

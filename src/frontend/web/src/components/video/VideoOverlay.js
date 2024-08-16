@@ -1,10 +1,10 @@
-import { VideoWebSocket } from "../ws/VideoWebSocket";
 import { Avatar, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import VideoContext from "../../context/VideoContext";
 
 const VideoOverlay = () => {
-    const { sendJsonMessage, lastJsonMessage, readyState } = VideoWebSocket();
+    const { lastJsonMessage, sendJsonMessage } = React.useContext(VideoContext);
     const [isCalling, setIsCalling] = useState(false);
     const [callStack, setCallStack] = useState([]);
     const navigate = useNavigate();
@@ -18,7 +18,7 @@ const VideoOverlay = () => {
 
     const handleAcceptCall = () => {
         setIsCalling(false);
-        navigate('/video', { state: { userID: lastJsonMessage.callerID, action: "acceptCall", offer: lastJsonMessage.offer } })
+        navigate('/video', { state: { userID: lastJsonMessage.callerID, action: "acceptCall", } })
     };
 
     const handleDeclineCall = () => {
