@@ -18,7 +18,7 @@ export const VideoProvider = ({ children }) => {
                         urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302']
                     }]
                 },
-                debug: 3,
+                debug: 2,
                 host: "localhost",
                 port: 9000,
                 path: "/video-peer"
