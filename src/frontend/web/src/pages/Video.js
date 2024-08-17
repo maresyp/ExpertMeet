@@ -5,6 +5,12 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
+import { Button, ButtonGroup } from '@mui/material';
+import MicIcon from '@mui/icons-material/Mic';
+import MicOffIcon from '@mui/icons-material/MicOff';
+import VideocamOffIcon from '@mui/icons-material/VideocamOff';
+import VideocamIcon from '@mui/icons-material/Videocam';
+import CallEndIcon from '@mui/icons-material/CallEnd';
 import VideoContext from '../context/VideoContext';
 import { useLocation } from 'react-router-dom';
 
@@ -14,7 +20,10 @@ const Video = () => {
     const { userID, action } = location.state || {};
 
     const [localStream, setLocalStream] = useState(null);
+    // eslint-disable-next-line no-unused-vars
     const [remoteStream, setRemoteStream] = useState(null);
+    const [micEnabled, setMicEnabled] = useState(true);
+    const [videoEnabled, setVideoEnabled] = useState(true);
     const videoLocalRef = useRef();
     const videoRemoteRef = useRef();
 
@@ -31,15 +40,46 @@ const Video = () => {
         }
     };
 
+    // Toggle Microphone
+    const toggleMic = () => {
+        if (localStream) {
+            const audioTrack = localStream.getAudioTracks()[0];
+            if (audioTrack) {
+                audioTrack.enabled = !audioTrack.enabled;
+                setMicEnabled(audioTrack.enabled);
+            }
+        }
+    };
+
+    // Toggle Video
+    const toggleVideo = () => {
+        if (localStream) {
+            const videoTrack = localStream.getVideoTracks()[0];
+            if (videoTrack) {
+                videoTrack.enabled = !videoTrack.enabled;
+                setVideoEnabled(videoTrack.enabled);
+            }
+        }
+    };
+
+    // End Call
+    const endCall = () => {
+        // peer.disconnect();
+        sendJsonMessage({
+            type: "end_call",
+            recipient: userID,
+        });
+        setLocalStream(null);
+        setRemoteStream(null);
+    };
+
     // Handle incoming call
     useEffect(() => {
         if (!localStream) return;
 
         peer.on('call', (call) => {
-            console.log("Incoming call", call);
             call.answer(localStream); // Answer the call with the local stream
             call.on('stream', (stream) => {
-                console.log("Received remote stream", stream);
                 setRemoteStream(stream);
                 if (videoRemoteRef.current) {
                     videoRemoteRef.current.srcObject = stream;
@@ -57,23 +97,18 @@ const Video = () => {
         if (!localStream || !lastJsonMessage) return;
 
         if (lastJsonMessage.type === 'video_answer') {
-            console.log("Video answer received", lastJsonMessage);
             const mediaConnection = peer.call(lastJsonMessage.peer, localStream);
             mediaConnection.on('stream', (stream) => {
-                console.log("Received remote stream", stream);
                 setRemoteStream(stream);
                 if (videoRemoteRef.current) {
                     videoRemoteRef.current.srcObject = stream;
                 }
             });
-        } else if (lastJsonMessage.type === "end_call") {
-            // Handle call end
         }
     }, [lastJsonMessage, localStream]);
 
     useEffect(() => {
         if (action === "startCall") {
-            console.log("Starting call");
             initializeLocalStream().then(() => {
                 sendJsonMessage({
                     type: "video_offer",
@@ -81,7 +116,6 @@ const Video = () => {
                 });
             });
         } else if (action === "acceptCall") {
-            console.log("Accepting call");
             initializeLocalStream().then(() => {
                 sendJsonMessage({
                     type: "video_answer",
@@ -146,6 +180,31 @@ const Video = () => {
                             borderRadius: '5%'
                         }}
                     />
+
+                    {/* Control Buttons */}
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            bottom: 20,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            width: 'auto',
+                        }}
+                    >
+                        <ButtonGroup color="info" variant="contained" aria-label="video call control buttons">
+                            <Button onClick={toggleMic}>
+                                {micEnabled ? <MicIcon /> : <MicOffIcon />}
+                            </Button>
+                            <Button onClick={toggleVideo}>
+                                {videoEnabled ? <VideocamIcon /> : <VideocamOffIcon />}
+                            </Button>
+                            <Button onClick={endCall} color="error">
+                                <CallEndIcon />
+                            </Button>
+                        </ButtonGroup>
+                    </Box>
                 </Grid>
             </Box>
         </Container>
