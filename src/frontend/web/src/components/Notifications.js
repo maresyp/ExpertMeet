@@ -8,18 +8,89 @@ import ListItemText from '@mui/material/ListItemText';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
+import AuthContext from '../context/AuthContext';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 
 export default function Notifications() {
-
+    useQueryClient();
     const [anchorEl, setAnchorEl] = React.useState(null);
+    const { authTokens } = React.useContext(AuthContext)
     const open = Boolean(anchorEl);
+    const { isLoading: notificationsLoading, data: notifications, error: notificationsError, refetch: refetchNotifications } = useQuery({
+        queryKey: ['Notifications'],
+        queryFn: ({ signal }) =>
+            fetch(`http://127.0.0.1:8081/api/notifications/`, {
+                signal,
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authTokens?.access}`,
+                },
+            }).then((res) => {
+                if (!res.ok) {
+                    throw new Error('Failed to fetch')
+                }
+                return res.json()
+            }),
+    })
+
+    const { isLoading: notificationsCountLoading, data: notificationsCount, error: notificationsCountError, refetch } = useQuery({
+        queryKey: ['NotificationsCount'],
+        queryFn: ({ signal }) =>
+            fetch(`http://127.0.0.1:8081/api/notifications/count/`, {
+                signal,
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authTokens?.access}`,
+                },
+            }).then((res) => {
+                if (!res.ok) {
+                    throw new Error('Failed to fetch')
+                }
+                return res.json()
+            }),
+    })
+
+    const fetchCreateAppointment = async ({ formData }) => {
+        const response = await fetch(`http://127.0.0.1:8081/api/notifications/mark_all_as_read/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authTokens?.access}`,
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to send markAsRead");
+        }
+
+        const data = await response.json();
+        return data;
+    };
+
+    const { mutate: markAsRead } = useMutation({
+        mutationFn: (formData) => fetchCreateAppointment({ formData }),
+        onSuccess: (data) => {
+            refetch();
+            refetchNotifications();
+        },
+        onError: (error) => {
+            console.error('Failed to update password', error);
+        }
+    });
 
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
+        markAsRead();
     };
     const handleClose = () => {
         setAnchorEl(null);
     };
+
+    console.log("notifications: ", notifications);
+    console.log("notifications count: ", notificationsCount);
 
     return (
         <React.Fragment>
@@ -33,7 +104,7 @@ export default function Notifications() {
                         aria-haspopup="true"
                         aria-expanded={open ? 'true' : undefined}
                     >
-                        <Badge badgeContent={3} color="primary">
+                        <Badge badgeContent={notificationsCount?.count || 0} color="primary">
                             <NotificationsIcon color="action" />
                         </Badge>
                     </IconButton>

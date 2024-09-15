@@ -15,12 +15,11 @@ import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import AuthContext from '../context/AuthContext';
-import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChatWebSocket } from '../components/ws/ChatWebSocket';
-import MarkChatReadOutlinedIcon from '@mui/icons-material/MarkChatReadOutlined';
 import CallIcon from '@mui/icons-material/Call';
-import { IconButton, Tooltip } from '@mui/material';
+import { Badge, IconButton, Tooltip } from '@mui/material';
+import { useParams, useNavigate } from 'react-router-dom';
 
 function ChatWindow({ recipientID, profile, newMessageCallback }) {
     const { user, authTokens } = React.useContext(AuthContext);
@@ -32,6 +31,7 @@ function ChatWindow({ recipientID, profile, newMessageCallback }) {
     const { sendJsonMessage, lastJsonMessage, readyState } = ChatWebSocket();
     const messagesEndRef = useRef(null);
     const chatContainerRef = useRef(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (lastJsonMessage !== null) {
@@ -148,6 +148,11 @@ function ChatWindow({ recipientID, profile, newMessageCallback }) {
         }
     };
 
+    const callButtonHandler = () => {
+        // navigate to video page and handle call from there
+        navigate("/video", { state: { userID: recipientID, action: "startCall" } })
+    }
+
     useEffect(() => {
         const chatContainer = chatContainerRef.current;
         chatContainer.addEventListener('scroll', handleScroll);
@@ -163,7 +168,7 @@ function ChatWindow({ recipientID, profile, newMessageCallback }) {
                 <Avatar alt={profile?.first_name || 'P'} src={`http://127.0.0.1:8080/api/profile/get_avatar_by_user/${profile?.id}`} />
                 <Typography variant="h6" style={{ fontWeight: 'bold' }}>{profile?.first_name} {profile?.last_name} </Typography>
                 <Tooltip title="Zadzwoń">
-                    <IconButton>
+                    <IconButton onClick={callButtonHandler}>
                         <CallIcon sx={{ fontSize: 25 }} />
                     </IconButton>
                 </Tooltip>
@@ -234,6 +239,19 @@ const Chat = () => {
     const { sendJsonMessage, lastJsonMessage, readyState } = ChatWebSocket();
     const [currentRecipient, setCurrentRecipient] = useState(null);
     const friendsContainerRef = useRef(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const navigate = useNavigate();
+
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
+    };
+
+    // TODO: implement server side filtering
+    const filteredConversations = conversations.filter(conversation => {
+        const profile = conversation.profile;
+        const fullName = `${profile?.first_name || ''} ${profile?.last_name || ''}`.toLowerCase();
+        return fullName.includes(searchTerm.toLowerCase());
+    });
 
     // Used for updating conversations when new message was sent in chat component
     const newMessageCallback = (userID) => {
@@ -242,6 +260,9 @@ const Chat = () => {
 
         const conversation = updatedConversations.find(cov => (cov.person1 === userID || cov.person2 === userID));
         if (conversation) {
+            if (conversation.person1 !== currentRecipient && conversation.person2 !== currentRecipient) {
+                conversation.unread = true;
+            }
             conversation.last_message_time = new Date().toISOString();
             updatedConversations.sort((a, b) => new Date(a.last_message_time) - new Date(b.last_message_time));
             updatedConversations.reverse();
@@ -250,19 +271,13 @@ const Chat = () => {
     }
 
     useEffect(() => {
-        // TODO: add indicator of new message
         if (lastJsonMessage !== null) {
-            console.log('Chat Received:', lastJsonMessage);
             if (lastJsonMessage.type === "chat-single-message") {
                 newMessageCallback(lastJsonMessage.sender);
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lastJsonMessage]);
-
-    useEffect(() => {
-        console.log("Socket readyState: ", readyState);
-    }, [readyState]);
 
     const fetchConversations = async ({ queryKey }) => {
         // eslint-disable-next-line no-unused-vars
@@ -336,26 +351,54 @@ const Chat = () => {
                     }
                 }));
 
+                const initializeNewChat = async () => {
+                    const userID = parseInt(newChatUserId)
+                    // TODO: There is a bug for initial users with 0 conversations that makes them unable to enter /chat/<id>
+                    // This if statement needs to be changed
+                    if (newChatUserId && currentRecipient && (currentRecipient !== userID)) {
+                        // Clear the newChatUserId parameter
+                        navigate('/chat', { replace: true });
+
+                        // if conversation with this user already exists ignore
+                        if (undefined === conversations.find(cov => (cov.person1 === userID || cov.person2 === userID))) {
+                            setCurrentRecipient(userID);
+
+                            const newConversation = { id: "unknown", person1: user.user_id, person2: userID, unread: false, last_message_time: new Date().toISOString() };
+                            newConversation.profile = await fetchUserData(userID);
+                            setConversations((prev) => [newConversation, ...prev]);
+                        } else {
+                            setCurrentRecipient(userID);
+                        }
+                    }
+                }
 
                 updatedConversations.sort((a, b) => new Date(a.last_message_time) - new Date(b.last_message_time));
                 updatedConversations.reverse();
 
                 setConversations((prevConversations) => {
                     const filteredConversations = updatedConversations.filter(
-                        (newData) => !prevConversations.some((cov) => cov.id === newData.id)
+                        (newData) => !prevConversations.some((cov) => (cov.id === newData.id) || (cov.profile.person1 === newData.profile.person1 && cov.profile.person2 === newData.profile.person2))
                     );
                     return [...prevConversations, ...filteredConversations]
                 }
                 );
 
+                initializeNewChat();
+
                 // Set currentRecipient to the first conversation's profile ID if not already set
                 if (!currentRecipient && updatedConversations.length > 0) {
                     setCurrentRecipient(updatedConversations[0].profile.id);
+                    updatedConversations[0].unread = false;
+                    sendJsonMessage({
+                        'type': 'chat_message_read',
+                        'recipient': updatedConversations[0].profile.id
+                    })
                 }
             };
 
             loadUsers();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data, user.user_id, currentRecipient]);
 
 
@@ -366,20 +409,17 @@ const Chat = () => {
     const handleFriendClick = (userID) => {
         setCurrentRecipient(userID)
 
+        const conversation = conversations.find(cov => (cov.person1 === userID || cov.person2 === userID));
+        if (conversation) {
+            conversation.unread = false;
+        }
+
         sendJsonMessage({
             'type': 'chat_message_read',
             'recipient': userID
         })
 
         console.log("new user clicked", userID);
-    }
-
-    // Used for creation of new chat when accessing /chat/<id>
-    if (newChatUserId && (currentRecipient !== newChatUserId)) {
-        console.log(newChatUserId);
-        setCurrentRecipient(newChatUserId)
-        // TODO : handle new chat window
-
     }
 
     const handleScroll = () => {
@@ -427,16 +467,18 @@ const Chat = () => {
                         flexDirection: 'column',
                     }}>
                         <Grid item xs={12} style={{ padding: '10px' }}>
-                            <TextField id="outlined-friend-search" label="Wyszukaj" variant="outlined" fullWidth />
+                            <TextField id="outlined-friend-search" label="Wyszukaj" variant="outlined" fullWidth onChange={handleSearchChange} />
                         </Grid>
 
                         <List ref={friendsContainerRef} sx={{ flexGrow: 1, maxHeight: "625px", overflowY: 'auto' }}>
-                            {conversations.map((conversation, index) => {
+                            {filteredConversations.map((conversation, index) => {
                                 const profile = conversation.profile
                                 return (
                                     <ListItem onClick={() => handleFriendClick(profile?.id)} button key={index}>
                                     <ListItemIcon>
+                                            <Badge color="error" overlap="circular" badgeContent=" " variant="dot" invisible={!conversation.unread}>
                                             <Avatar alt={profile?.first_name || 'P'} src={`http://127.0.0.1:8080/api/profile/get_avatar_by_user/${profile?.id}`} />
+                                            </Badge>
                                     </ListItemIcon>
                                         <ListItemText primary={profile?.first_name + " " + profile?.last_name}></ListItemText>
                                     <ListItemText secondary={new Date(conversation.last_message_time).toLocaleTimeString()} align="right"></ListItemText>

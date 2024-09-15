@@ -4,15 +4,15 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import AuthContext from '../../context/AuthContext';
 
 
-export const ChatWebSocket = () => {
-    const { authTokens } = React.useContext(AuthContext);
-    const WS_URL = "ws://127.0.0.1:8082/ws/socket-server/chat/"
+export const VideoWebSocket = () => {
+    const { user, authTokens } = React.useContext(AuthContext);
+    const WS_URL = "ws://127.0.0.1:8082/ws/socket-server/video/"
 
     const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
         WS_URL,
         {
             queryParams: {
-                "token": authTokens.access
+                "token": authTokens?.access
             },
             share: true,
             shouldReconnect: (closeEvent) => true,
@@ -25,14 +25,15 @@ export const ChatWebSocket = () => {
                 timeout: 60000, // 1 minute, if no response is received, the connection will be closed
                 interval: 25000, // every 25 seconds, a ping message will be sent
             },
-            onOpen: () => console.log('ChatWebSocket opened.'),
-            onClose: () => console.log('ChatWebSocket closed.'),
+            onOpen: () => console.log('VideoWebSocket opened.'),
+            onClose: () => console.log('VideoWebSocket closed.'),
             onMessage: (event) => {
                 if (event.data !== "pong") {
-                    console.log('ChatWebSocket received', event)
+                    console.log('VideoWebSocket received', event)
                 }
             },
-        }
+        },
+        user !== null
     );
 
     return {

@@ -19,8 +19,19 @@ services:
           target: /app
           ignore:
           - node_modules/
+          - peerJS.Dockerfile
         - action: rebuild
           path: package.json
+
+  frontend-peer-server:
+    container_name: expertmeet-frontend-peer-server
+    build:
+      context: src/frontend/web
+      dockerfile: peerJS.Dockerfile
+    ports:
+      - 9000:9000
+    depends_on:
+      - frontend-web-server
 
   expertmeet-nginx-server:
     container_name: expertmeet-nginx-server
@@ -59,6 +70,8 @@ services:
       - .env
     environment:
       - POSTGRES_PORT=5432
+    ports:
+      - 5430:5432 # TODO: remove after debug is not needed anymore
     expose:
       - 5432
     healthcheck:
@@ -102,7 +115,7 @@ services:
       dockerfile: DockerfileCelery
     depends_on:
       - notifications-django-server
-      - celery-message-broker
+      - rabbit-message-broker
 
   notifications-db-postgres:
     container_name: notifications-db-postgres
@@ -115,6 +128,8 @@ services:
       - .env
     environment:
       - POSTGRES_PORT=5432
+    ports:
+      - 5431:5432 # TODO: remove after debug is not needed anymore
     expose:
       - 5432
     healthcheck:
@@ -143,6 +158,7 @@ services:
           src/backend/conversations
         depends_on:
           - conversations-db-postgres
+          - rabbit-message-broker
         develop:
           watch:
             - action: sync+restart
@@ -158,7 +174,7 @@ services:
       dockerfile: DockerfileCelery
     depends_on:
       - conversations-django-server
-      - celery-message-broker
+      - rabbit-message-broker
 
   conversations-db-postgres:
     container_name: conversations-db-postgres
@@ -171,6 +187,8 @@ services:
       - .env
     environment:
       - POSTGRES_PORT=5432
+    ports:
+      - 5432:5432 # TODO: remove after debug is not needed anymore
     expose:
       - 5432
     healthcheck:
@@ -179,8 +197,8 @@ services:
       timeout: 5s
       retries: 5
 
-  celery-message-broker:
-    container_name: celery-message-broker
+  rabbit-message-broker:
+    container_name: rabbit-message-broker
     image: rabbitmq
     expose:
       - 5672

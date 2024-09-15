@@ -1,25 +1,62 @@
-from typing import ClassVar
+from __future__ import annotations
 
+from typing import TYPE_CHECKING, ClassVar
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.shortcuts import get_object_or_404
 from profiles.models import Category, Profile, Review, ReviewSummary
 from rest_framework.serializers import CharField, FloatField, ModelSerializer, Serializer, SerializerMethodField, UUIDField
 
 
 class ProfileSerializer(ModelSerializer):
     username = SerializerMethodField()
+    user_id = SerializerMethodField()
+    category = SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields: ClassVar = ["id", "username", "bio"]
+        fields: ClassVar = ["id", "username", "user_id", "bio", "category", "description"]
 
     def get_username(self, obj) -> str:
         return f"{obj.user.first_name} {obj.user.last_name}"
+
+    def get_category(self, obj) -> str | None:
+        return str(obj.category.name) if obj.category else None
+
+    def get_user_id(self, obj) -> int:
+        user = get_object_or_404(User, profile__id=obj.id)
+        return user.id
+
+
+class ProfileDeserializer(Serializer):
+    category = UUIDField(required=False, allow_null=True)
+    bio = CharField(required=False, allow_blank=True, max_length=256)
+    description = CharField(required=False, allow_blank=True, max_length=1028)
+
+
+class PasswordChangeDeserializer(Serializer):
+    old_password = CharField(max_length=128)
+    new_password1 = CharField(max_length=128)
+    new_password2 = CharField(max_length=128)
 
 
 class ReviewSerializer(ModelSerializer):
     class Meta:
         model = Review
         fields = "__all__"
+
+    author_profile_id = SerializerMethodField()
+    author_profile_name = SerializerMethodField()
+
+    def get_author_profile_id(self, obj) -> UUID:
+        return obj.author.profile.id
+
+    def get_author_profile_name(self, obj) -> str:
+        return f"{obj.author.first_name} {obj.author.last_name}"
 
 
 class ReviewSummarySerializer(ModelSerializer):

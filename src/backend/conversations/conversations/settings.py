@@ -165,13 +165,13 @@ else:
         "default": {
             "BACKEND": "channels_rabbitmq.core.RabbitmqChannelLayer",
             "CONFIG": {  # type: ignore [dict-item]
-                "host": "amqp://guest:guest@celery-message-broker:5672/%2F",
+                "host": "amqp://guest:guest@rabbit-message-broker:5672/%2F",
             },
         },
     }
 
 # Celery Configuration Options
-CELERY_BROKER_URL = "celery-message-broker"
+CELERY_BROKER_URL = "rabbit-message-broker"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
